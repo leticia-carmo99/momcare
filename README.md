@@ -21,5 +21,5 @@ Para o desenvolvimento completo do MomCare, será utilizada a plaforma Expo sobr
 
 ### 3. Conclusão
 
-Deste modo, observa-se que
+Deste modo, o aplicativo fornece informações confiáveis, ajuda na organização de tarefas e ainda abre espaço para interação entre pessoas que experienciam a mesma situação ou profissionais. Tanto a maternidade quanto o puérperio são momentos complexos e necessitam de muita atenção, então as funcionalidades são redirecionadas exclusivamente para fornecê-la. Assim, o MomCare se torna uma opção viável para mães e profissionais relacionadas à geração de uma nova vida.
 
