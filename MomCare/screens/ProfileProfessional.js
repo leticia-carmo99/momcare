@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "rea
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavProfessional";
 
-export default function ProfileProfessionalScreen({ navigation }) {
+export default function ProfileProfessional({ navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

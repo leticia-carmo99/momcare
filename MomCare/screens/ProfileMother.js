@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, } from "re
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 
-export default function ProfileMotherScreen({ navigation }) {
+export default function ProfileMother({ navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView

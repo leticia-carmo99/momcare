@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNavProfessional";
 import doctorImage from "../assets/baby.png"; 
 
-export default function HomeProfessionalScreen({ navigation }) {
+export default function HomeProfessional({ navigation }) {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView

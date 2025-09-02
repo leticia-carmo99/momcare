@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-nati
 import BottomNav from "../components/BottomNavProfessional";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function TasksProfessionalScreen({ navigation }) {
+export default function TasksProfessional({ navigation }) {
   const [selectedDay, setSelectedDay] = useState("21"); 
   const [tarefas, setTarefas] = useState([
     {

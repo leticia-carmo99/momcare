@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, Image, TouchableOpacity, TextInput, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function App({ navigation }) {
+export default function NewComment({ navigation }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 

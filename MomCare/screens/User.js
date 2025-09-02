@@ -4,7 +4,7 @@ import logo from "../assets/logoname.png";
 import linhasCima from "../assets/linhascima.png";
 import linhasBaixo from "../assets/linhasbaixo.png";
 
-export default function UserScreen({ navigation }) {
+export default function User({ navigation }) {
   return (
     <>
       <StatusBar

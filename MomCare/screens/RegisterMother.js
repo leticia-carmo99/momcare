@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from '@expo/vector-icons'; 
 
-export default function RegisterMotherScreen({ navigation }) {
+export default function RegisterMother({ navigation }) {
   const [username, setUsername] = useState("");
   const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");

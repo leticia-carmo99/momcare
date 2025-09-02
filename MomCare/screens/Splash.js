@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Image, ActivityIndicator, StyleSheet } from 'react-native';
 
-export default function SplashScreen({ navigation }) {
+export default function Splash({ navigation }) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       navigation.replace('User'); 

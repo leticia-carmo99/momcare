@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-nati
 import BottomNav from "../components/BottomNavMother";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function TasksMotherScreen({ navigation }) {
+export default function TasksMother({ navigation }) {
   const [selectedDay, setSelectedDay] = useState("21"); 
   const [tarefas, setTarefas] = useState([
     {

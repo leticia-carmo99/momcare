@@ -16,7 +16,7 @@ LocaleConfig.locales['pt-br'] = {
 };
 LocaleConfig.defaultLocale = 'pt-br';
 
-export default function CreateScreen() {
+export default function Create() {
   const navigation = useNavigation();
 
   const today = new Date();

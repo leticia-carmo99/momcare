@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
-export default function App() {
+export default function PresentationMother1() {
   const primaryColor = '#C31E65'; // O rosa que você mencionou
 
   return (

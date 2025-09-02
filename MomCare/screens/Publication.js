@@ -51,7 +51,7 @@ const publication = {
   ],
 };
 
-export default function PublicationScreen({ navigation }) {
+export default function Publication({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>

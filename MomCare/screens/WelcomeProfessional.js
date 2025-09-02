@@ -4,7 +4,7 @@ import logo from "../assets/logoname.png";
 import linhasCima from "../assets/linhascima.png";
 import linhasBaixo from "../assets/linhasbaixo.png";
 
-export default function WelcomeProfessionalScreen({ navigation }) {
+export default function WelcomeProfessional({ navigation }) {
   return (
     <>
       <StatusBar

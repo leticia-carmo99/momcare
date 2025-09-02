@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function ArticleScreen({ navigation }) {
+export default function Article({ navigation }) {
   return (
     <View style={styles.wrapper}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />

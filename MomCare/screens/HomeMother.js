@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNavMother";
 import babyImage from "../assets/baby.png";
 
-export default function HomeMotherScreen({ navigation }) {
+export default function HomeMother({ navigation }) {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView

@@ -16,7 +16,7 @@ LocaleConfig.locales['pt-br'] = {
 };
 LocaleConfig.defaultLocale = 'pt-br';
 
-export default function SeeAllScreen() {
+export default function SeeAll() {
   const today = new Date();
   const todayStr = today.getFullYear() + '-' +
     String(today.getMonth() + 1).padStart(2, '0') + '-' +

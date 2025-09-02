@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function LoginProfessionalScreen({ navigation }) {
+export default function LoginProfessional({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

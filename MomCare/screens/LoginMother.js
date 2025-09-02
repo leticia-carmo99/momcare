@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function LoginMotherScreen({ navigation }) {
+export default function LoginMother({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

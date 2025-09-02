@@ -29,13 +29,16 @@ import PresentationMother1Screen from "./screens/PresentationMother1";
 import PresentationMother2Screen from "./screens/PresentationMother2";
 import PresentationMother3Screen from "./screens/PresentationMother3";
 
+import Teste from "./screens/Teste";
+
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="SplashScreen" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Teste" component={Teste} />
         <Stack.Screen name="WelcomeMother" component={WelcomeMotherScreen} />
         <Stack.Screen name="LoginMother" component={LoginMotherScreen} />
         <Stack.Screen name="RegisterMother" component={RegisterMotherScreen} />
@@ -59,10 +62,8 @@ export default function App() {
         <Stack.Screen name="TasksProfessional" component={TasksProfessionalScreen} />
         <Stack.Screen name="ForumProfessional" component={ForumProfessionalScreen} />
         <Stack.Screen name="ProfileProfessional" component={ProfileProfessionalScreen} />
-        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="SplashScreen" component={SplashScreen} />
         <Stack.Screen name="PresentationMother1" component={PresentationMother1Screen} />
-        <Stack.Screen name="PresentationMother2" component={PresentationMother2Screen} />
-        <Stack.Screen name="PresentationMother3" component={PresentationMother3Screen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

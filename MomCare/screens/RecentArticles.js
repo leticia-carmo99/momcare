@@ -129,7 +129,7 @@ const ArticleItem = ({ article, showEditInline }) => {
   );
 };
 
-const RecentArticlesScreen = ({ navigation }) => {
+const RecentArticles = ({ navigation }) => {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 140, marginTop: 40 }}>
@@ -163,7 +163,7 @@ const RecentArticlesScreen = ({ navigation }) => {
   );
 };
 
-export default RecentArticlesScreen;
+export default RecentArticles;
 
 const styles = StyleSheet.create({
   recentArticlesCard: {

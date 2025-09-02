@@ -71,7 +71,7 @@ const posts = [
   },
 ];
 
-export default function ForumMotherScreen({ navigation }) {
+export default function ForumMother({ navigation }) {
   const renderItem = ({ item }) => {
     const PostContent = (
       <View style={styles.postContainer}>
