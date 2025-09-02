@@ -2,7 +2,7 @@
 
 Integrantes: Leticia do Patrocinio Carmo, Mayara Almeida de Campos, Natália dos Santos Paschoa, Sabrina Oliveira Nunes, Vinicius de Oliveira Sousa, Vitor Damaceno Barbosa
 
-  DESCRIÇÃO DO PROJETO MOMCARE
+# DESCRIÇÃO DO PROJETO MOMCARE
 
 O período da maternindade, embora especial, traz inúmeros desafios e consequências para a futura mãe. Riscos de desenvolvimento de doenças, depressão pós parto e falta de uma rede de apoio consolidada são exemplos de probelmas com altos índices de desenvolvimento entre este grupo. Levando em consideração os presentes fatos, o MomCare é um aplicativo que se propõe a utilizar da tecnologia como auxílio para prevenção e enfretamento das questões.
 
