@@ -1,20 +1,70 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import WelcomeMotherScreen from "./screens/WelcomeMother";
+import LoginMotherScreen from "./screens/LoginMother";
+import RegisterMotherScreen from "./screens/RegisterMother";
+import HomeMotherScreen from "./screens/HomeMother";
+import DailyScreen from "./screens/Daily";
+import TasksMotherScreen from "./screens/TasksMother";
+import ForumMotherScreen from "./screens/ForumMother";
+import ProfileMotherScreen from "./screens/ProfileMother";
+import ArticleScreen from "./screens/Article";
+import CreateScreen from "./screens/Create";
+import CommentScreen from "./screens/Comment";
+import NewCommentScreen from "./screens/NewComment";
+import PublicationScreen from "./screens/Publication";
+import SeeAllScreen from "./screens/SeeAll";
+import UserScreen from "./screens/User";
+import WelcomeProfessionalScreen from "./screens/WelcomeProfessional";
+import LoginProfessionalScreen from "./screens/LoginProfessional";
+import RegisterProfessionalScreen from "./screens/RegisterProfessional";
+import HomeProfessionalScreen from "./screens/HomeProfessional";
+import RecentArticlesScreen from "./screens/RecentArticles";
+import TasksProfessionalScreen from "./screens/TasksProfessional";
+import ForumProfessionalScreen from "./screens/ForumProfessional";
+import ProfileProfessionalScreen from "./screens/ProfileProfessional";
+import SplashScreen from "./screens/Splash";
+import PresentationMother1Screen from "./screens/PresentationMother1";
+import PresentationMother2Screen from "./screens/PresentationMother2";
+import PresentationMother3Screen from "./screens/PresentationMother3";
+
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="WelcomeMother" component={WelcomeMotherScreen} />
+        <Stack.Screen name="LoginMother" component={LoginMotherScreen} />
+        <Stack.Screen name="RegisterMother" component={RegisterMotherScreen} />
+        <Stack.Screen name="HomeMother" component={HomeMotherScreen} />
+        <Stack.Screen name="Daily" component={DailyScreen} />
+        <Stack.Screen name="TasksMother" component={TasksMotherScreen} />
+        <Stack.Screen name="ForumMother" component={ForumMotherScreen} />
+        <Stack.Screen name="ProfileMother" component={ProfileMotherScreen} />
+        <Stack.Screen name="Article" component={ArticleScreen} />
+        <Stack.Screen name="Create" component={CreateScreen} />
+        <Stack.Screen name="Comment" component={CommentScreen} />
+        <Stack.Screen name="NewComment" component={NewCommentScreen} />
+        <Stack.Screen name="Publication" component={PublicationScreen} />
+        <Stack.Screen name="SeeAll" component={SeeAllScreen} />
+        <Stack.Screen name="User" component={UserScreen} />
+        <Stack.Screen name="WelcomeProfessional" component={WelcomeProfessionalScreen} />
+        <Stack.Screen name="LoginProfessional" component={LoginProfessionalScreen} />
+        <Stack.Screen name="RegisterProfessional" component={RegisterProfessionalScreen} />
+        <Stack.Screen name="HomeProfessional" component={HomeProfessionalScreen} />
+        <Stack.Screen name="RecentArticles" component={RecentArticlesScreen} />
+        <Stack.Screen name="TasksProfessional" component={TasksProfessionalScreen} />
+        <Stack.Screen name="ForumProfessional" component={ForumProfessionalScreen} />
+        <Stack.Screen name="ProfileProfessional" component={ProfileProfessionalScreen} />
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="PresentationMother1" component={PresentationMother1Screen} />
+        <Stack.Screen name="PresentationMother2" component={PresentationMother2Screen} />
+        <Stack.Screen name="PresentationMother3" component={PresentationMother3Screen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
