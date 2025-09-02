@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Textura from '../assets/textura.png';
 
 export default function LoginMother({ navigation }) {
   const [username, setUsername] = useState("");
@@ -15,6 +16,7 @@ export default function LoginMother({ navigation }) {
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.container}>
+         <Image source={Textura} style={styles.textura}/>
     
         <TouchableOpacity
           style={styles.backButton}
@@ -95,6 +97,10 @@ const styles = StyleSheet.create({
   backButton: {
     marginTop: 40,
     marginLeft: 20,
+  },
+    textura: {
+    height: '100%',
+    position: 'absolute',
   },
   form: {
     flex: 1,
