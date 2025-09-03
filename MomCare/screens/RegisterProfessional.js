@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { Ionicons } from '@expo/vector-icons'; 
+import Textura from '../assets/textura.png';
 
 export default function RegisterProfessional({ navigation }) {
   const [username, setUsername] = useState("");
@@ -19,6 +20,7 @@ export default function RegisterProfessional({ navigation }) {
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.container}>
+        <Image source={Textura} style={{height: '100%', position: 'absolute'}} />
 
         <TouchableOpacity style={styles.backButton} 
           onPress={() => navigation.navigate("WelcomeProfessional")} 

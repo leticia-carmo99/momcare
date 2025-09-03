@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import WelcomeMotherScreen from "./screens/WelcomeMother";
 import LoginMotherScreen from "./screens/LoginMother";
 import RegisterMotherScreen from "./screens/RegisterMother";
-import HomeMotherScreen from "./screens/HomeMother";
 import DailyScreen from "./screens/Daily";
 import TasksMotherScreen from "./screens/TasksMother";
 import ForumMotherScreen from "./screens/ForumMother";
@@ -39,7 +38,7 @@ export default function App() {
         <Stack.Screen name="WelcomeMother" component={WelcomeMotherScreen} />
         <Stack.Screen name="LoginMother" component={LoginMotherScreen} />
         <Stack.Screen name="RegisterMother" component={RegisterMotherScreen} />
-        <Stack.Screen name="HomeMother" component={HomeMotherScreen} />
+        <Stack.Screen name="HomeMother" component={AppDrawer} />
         <Stack.Screen name="Daily" component={DailyScreen} />
         <Stack.Screen name="TasksMother" component={TasksMotherScreen} />
         <Stack.Screen name="ForumMother" component={ForumMotherScreen} />
