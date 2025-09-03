@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TextInput, FlatList, Image, TouchableOpacity } from "react-native";
+import {View, Text, StyleSheet, TextInput, FlatList, Image, TouchableOpacity, } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 import FotoArtigo from "../assets/fotoartigo.png";
@@ -67,22 +67,46 @@ const posts = [
     comments: 7,
     likes: 15,
     avatar: "https://randomuser.me/api/portraits/women/50.jpg",
-    image: null, 
+    image: null,
   },
 ];
 
 export default function ForumMother({ navigation }) {
   const renderItem = ({ item }) => {
-    const PostContent = (
-      <View style={styles.postContainer}>
+    
+    const postHeader =
+      item.id === "1" ? (
+        <View style={styles.postHeader}>
+          <TouchableOpacity
+            style={{ flexDirection: "row", flex: 1, alignItems: "center" }}
+            onPress={() => navigation.navigate("VisibleProfile")}
+          >
+            <Image source={{ uri: item.avatar }} style={styles.avatar} />
+            <View style={{ marginLeft: 10 }}>
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={[styles.handle, { color: "#C31E65" }]}>
+                {item.handle}
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.time}>{item.time}</Text>
+        </View>
+      ) : (
         <View style={styles.postHeader}>
           <Image source={{ uri: item.avatar }} style={styles.avatar} />
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={styles.name}>{item.name}</Text>
-            <Text style={[styles.handle, { color: "#C31E65" }]}>{item.handle}</Text>
+            <Text style={[styles.handle, { color: "#C31E65" }]}>
+              {item.handle}
+            </Text>
           </View>
           <Text style={styles.time}>{item.time}</Text>
         </View>
+      );
+
+    const PostContent = (
+      <View style={styles.postContainer}>
+        {postHeader}
 
         <Text style={styles.message}>{item.message}</Text>
 
@@ -131,6 +155,7 @@ export default function ForumMother({ navigation }) {
     );
 
     if (item.id === "1") {
+      
       return (
         <TouchableOpacity
           activeOpacity={0.8}

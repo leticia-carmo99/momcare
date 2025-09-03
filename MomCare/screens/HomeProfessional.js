@@ -1,9 +1,9 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNavProfessional";
-import doctorImage from "../assets/baby.png"; 
+import doctorImage from "../assets/fotoperfil.png";
 
 export default function HomeProfessional({ navigation }) {
   return (
@@ -95,8 +95,8 @@ export default function HomeProfessional({ navigation }) {
           <View style={styles.articleItem}>
             <View style={styles.articleInfo}>
               <Text style={styles.articleTitle}>
-                Primeiros sinais de{" "}
-                <Text style={{ fontWeight: "bold" }}>desenvolvimento</Text> motor
+                Primeiros sinais de{"\n"}
+                desenvolvimento motor
               </Text>
               <View style={styles.articleMeta}>
                 <Text style={[styles.articleBadge, { fontWeight: "bold" }]}>
@@ -123,15 +123,15 @@ export default function HomeProfessional({ navigation }) {
                     <Text style={styles.articleStatsText}>12</Text>
                   </View>
                 </View>
-
-                <TouchableOpacity>
-                  <Text style={styles.editLink}>Editar</Text>
-                </TouchableOpacity>
               </View>
             </View>
+
             <View style={styles.articleActions}>
-              <TouchableOpacity style={styles.publishedBadge}>
+              <View style={styles.publishedBadge}>
                 <Text style={styles.publishedText}>Publicado</Text>
+              </View>
+              <TouchableOpacity>
+                <Text style={[styles.editLink, { marginTop: 50 }]}>Editar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: "#DDD",
-    marginVertical: 20, 
+    marginVertical: 20,
     marginHorizontal: -20,
   },
   doctorImage: {
@@ -376,5 +376,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#C31E65",
     fontWeight: "bold",
+    marginTop: 0,
   },
 });

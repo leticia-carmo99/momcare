@@ -21,10 +21,13 @@ export default function HomeMother({ navigation }) {
           >
             <Ionicons name="heart-outline" size={28} color="#fff" />
           </LinearGradient>
-          <View style={{ marginLeft: 12 }}>
+          <View style={{ marginLeft: 12, flex: 1 }}>
             <Text style={styles.greeting}>Boa tarde, Verônica!</Text>
             <Text style={styles.question}>Como você está hoje?</Text>
           </View>
+          <TouchableOpacity onPress={() => navigation.openDrawer?.()} style={styles.menuButton}>
+            <Ionicons name="menu" size={28} color="#C31E65" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.babyCard}>
@@ -70,7 +73,7 @@ export default function HomeMother({ navigation }) {
             <Text style={styles.tipTitle}>Dica do dia</Text>
           </View>
           <Text style={styles.tipText}>
-            blaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            Lembre-se de manter a rotina do bebê consistente para um desenvolvimento saudável. Nós estamos com você!
           </Text>
         </View>
 
@@ -135,6 +138,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#000",
+  },
+  menuButton: {
+    padding: 8,
   },
   babyCard: {
     flexDirection: "row",
@@ -240,8 +246,9 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 14,
-    color: "#4A4A4A",
+    color: "#C31E65",
     lineHeight: 20,
+    textAlign: "justify",
   },
   activitiesCard: {
     backgroundColor: "#F6F6F6",
@@ -286,4 +293,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-

@@ -7,39 +7,44 @@ export default function ProfileProfessional({ navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Image
-            source={require("../assets/fotoperfil.png")} 
-            style={styles.profileImage}
-          />
-          <Text style={styles.name}>Natália dos Santos</Text>
-          <Text style={styles.username}>@nat.pediatra</Text>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Pediatra</Text>
+
+        <View style={styles.topHeader}>
+          <View>
+            <Text style={styles.topTitle}>Meu Perfil</Text>
+            <Text style={styles.topSubtitle}>Gerencie suas informações</Text>
           </View>
+          <TouchableOpacity style={styles.editButton}>
+            <Text style={styles.editButtonText}>Editar</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.cardWithShadow}>
-          <Text style={styles.infoTitle}>Informações do profissional</Text>
-          <View style={styles.infoRow}>
-            <View style={styles.infoBox}>
-              <Text style={styles.label}>CRM</Text>
-              <Text style={styles.value}>12345-SP</Text>
-            </View>
-            <View style={styles.infoBox}>
-              <Text style={styles.label}>Especialização</Text>
-              <Text style={styles.value}>Neonatologia</Text>
+        <View style={styles.profileCard}>
+          <View style={styles.profileHeader}>
+            <Image
+              source={require("../assets/fotoperfil.png")}
+              style={styles.profileImage}
+            />
+            <View style={styles.profileInfo}>
+              <Text style={styles.name}>Natália dos Santos</Text>
+              <Text style={styles.subInfo}>Pediatra - CRM 12345-SP</Text>
+              <View style={styles.specialtyBadge}>
+                <Text style={styles.specialtyText}>Neonatologia</Text>
+              </View>
             </View>
           </View>
 
-          <View style={styles.infoRow}>
-            <View style={styles.infoBox}>
-              <Text style={styles.label}>Anos atuando</Text>
-              <Text style={styles.value}>5 anos</Text>
+          <View style={styles.contactInfo}>
+            <View style={styles.contactRow}>
+              <Ionicons name="mail-outline" size={16} color="#666" style={styles.icon} />
+              <Text style={styles.contactText}>dranat.santos@gmail.com</Text>
             </View>
-            <View style={styles.infoBox}>
-              <Text style={styles.label}>Formação</Text>
-              <Text style={styles.value}>Pediatria</Text>
+            <View style={styles.contactRow}>
+              <Ionicons name="call-outline" size={16} color="#666" style={styles.icon} />
+              <Text style={styles.contactText}>(11) 96276-7256</Text>
+            </View>
+            <View style={styles.contactRow}>
+              <Ionicons name="location-outline" size={16} color="#666" style={styles.icon} />
+              <Text style={styles.contactText}>São Paulo, SP</Text>
             </View>
           </View>
         </View>
@@ -64,7 +69,7 @@ export default function ProfileProfessional({ navigation }) {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate("RecentArticles")}>
-            <MaterialCommunityIcons name="file-document-outline" size={24} color="#555" />
+            <MaterialCommunityIcons name="book-outline" size={24} color="#555" />
             <Text style={styles.actionText}>Artigos publicados</Text>
           </TouchableOpacity>
         </View>
@@ -83,76 +88,98 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 90,
   },
-  header: {
-    alignItems: "center",
+  topHeader: {
     marginTop: 60,
-    marginBottom: 20,
-  },
-  profileImage: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    marginBottom: 12,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#C31E65",
-  },
-  username: {
-    fontSize: 14,
-    color: "#888",
-    marginBottom: 8,
-  },
-  tag: {
-    backgroundColor: "#FFD6EC",
-    paddingHorizontal: 40, 
-    paddingVertical: 5,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: "#C31E65",
-  },
-  tagText: {
-    color: "#C31E65",
-    fontSize: 13,
-  },
-  cardWithShadow: {
-    backgroundColor: "#FAFAFA",
-    padding: 15,
     marginHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginBottom: 25,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  infoTitle: {
-    color: "#C31E65",
-    fontWeight: "bold",
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    alignItems: "flex-start",
+    marginBottom: 25,
   },
-  infoBox: {
-    flex: 1,
-    marginRight: 10,
-  },
-  label: {
-    fontSize: 12,
-    color: "#666",
-  },
-  value: {
-    fontSize: 14,
+  topTitle: {
+    fontSize: 18,
     fontWeight: "bold",
     color: "#000",
+  },
+  topSubtitle: {
+    fontSize: 14,
+    color: "#888",
+    marginTop: 2,
+  },
+  editButton: {
+    borderWidth: 1,
+    borderColor: "#C31E65",
+    paddingHorizontal: 15,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  editButtonText: {
+    color: "#C31E65",
+    fontSize: 13,
+    fontWeight: "bold",
+  },
+  profileCard: {
+    backgroundColor: "#FFECF7",
+    marginHorizontal: 20,
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#F7E2EB",
+  },
+  profileHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  profileImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+  },
+  profileInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  subInfo: {
+    fontSize: 13,
+    color: "#555",
+  },
+  specialtyBadge: {
+    backgroundColor: "#C31E65",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  specialtyText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  contactInfo: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#FAD0E5",
+    paddingTop: 10,
+  },
+  contactRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  icon: {
+    marginRight: 6,
+  },
+  contactText: {
+    fontSize: 12,
+    color: "#666",
   },
   statsContainer: {
     flexDirection: "row",
@@ -186,6 +213,20 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
   },
+  cardWithShadow: {
+    backgroundColor: "#FAFAFA",
+    padding: 15,
+    marginHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+    marginBottom: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   actionsTitle: {
     fontSize: 14,
     fontWeight: "bold",
@@ -203,3 +244,6 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 });
+
+
+
