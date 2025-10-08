@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { 
+  View, Text, TextInput, TouchableOpacity, 
+  StyleSheet, ScrollView, Image, Alert 
+} from "react-native";
 import { Ionicons } from '@expo/vector-icons'; 
 import Textura from '../assets/textura.png';
 
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebaseConfig";  
 
 export default function RegisterMother({ navigation }) {
@@ -13,32 +16,92 @@ export default function RegisterMother({ navigation }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Validação de email
+  const validateEmail = (email) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+  };
+
+  // Validação de CPF
+  const validateCPF = (cpf) => {
+    cpf = cpf.replace(/[^\d]+/g,''); // remove caracteres não numéricos
+    if(cpf.length !== 11) return false;
+    if (/^(\d)\1+$/.test(cpf)) return false; // todos iguais
+
+    let sum = 0;
+    let remainder;
+
+    for (let i = 1; i <= 9; i++) sum += parseInt(cpf.substring(i-1, i)) * (11 - i);
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpf.substring(9, 10))) return false;
+
+    sum = 0;
+    for (let i = 1; i <= 10; i++) sum += parseInt(cpf.substring(i-1, i)) * (12 - i);
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpf.substring(10, 11))) return false;
+
+    return true;
+  };
+
+  // Verifica se email já está cadastrado
+  const checkEmailExists = async (email) => {
+    const q = query(collection(db, "maes"), where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty; // true se achou e-mail igual
+  };
 
   const handleRegister = async () => {
+    if (loading) return; // previne múltiplos cliques
+
     if (!email || !cpf || !password || !confirmPassword) {
-      alert("Por favor, preencha todos os campos.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      alert("As senhas não coincidem.");
+      Alert.alert("Erro", "Por favor, preencha todos os campos.");
       return;
     }
 
+    if (!validateEmail(email)) {
+      Alert.alert("Erro", "Por favor, insira um e-mail válido.");
+      return;
+    }
+
+    if (!validateCPF(cpf)) {
+      Alert.alert("Erro", "CPF inválido. Por favor, insira um CPF válido.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Erro", "As senhas não coincidem.");
+      return;
+    }
+
+    setLoading(true);
     try {
+      const emailExists = await checkEmailExists(email.trim().toLowerCase());
+      if (emailExists) {
+        Alert.alert("Erro", "Este e-mail já está cadastrado.");
+        setLoading(false);
+        return;
+      }
+
       const dados = {
         email: email.trim().toLowerCase(),
-        cpf,
+        cpf: cpf.replace(/[^\d]+/g,''), // salva só números no CPF
         senha: password,
       };
 
       await addDoc(collection(db, "maes"), dados);
 
-      alert("Cadastro realizado com sucesso!");
-      navigation.navigate("HomeMother");
+      Alert.alert("Sucesso", "Cadastro realizado com sucesso!", [
+        { text: "OK", onPress: () => navigation.navigate("HomeMother") }
+      ]);
     } catch (error) {
       console.error("Erro ao cadastrar:", error);
-      alert("Erro ao cadastrar. Tente novamente.");
+      Alert.alert("Erro", "Erro ao cadastrar. Tente novamente.");
     }
+    setLoading(false);
   };
 
   return (
@@ -48,6 +111,7 @@ export default function RegisterMother({ navigation }) {
 
         <TouchableOpacity style={styles.backButton} 
           onPress={() => navigation.navigate("WelcomeMother")} 
+          disabled={loading}
         >
           <Ionicons 
             name="chevron-back" 
@@ -71,6 +135,9 @@ export default function RegisterMother({ navigation }) {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            textContentType="emailAddress"
+            autoComplete="email"
+            editable={!loading}
           />
           <TextInput
             placeholder="CPF:"
@@ -79,6 +146,7 @@ export default function RegisterMother({ navigation }) {
             value={cpf}
             onChangeText={setCpf}
             keyboardType="numeric"
+            editable={!loading}
           />
           <View style={[styles.passwordContainer, styles.passwordBorder]}>
             <TextInput
@@ -88,8 +156,11 @@ export default function RegisterMother({ navigation }) {
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
+              editable={!loading}
+              textContentType="password"
+              autoComplete="password-new"
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={loading}>
               <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
             </TouchableOpacity>
           </View>
@@ -102,14 +173,21 @@ export default function RegisterMother({ navigation }) {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showConfirmPassword}
+              editable={!loading}
+              textContentType="password"
+              autoComplete="password-new"
             />
-            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
               <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={[styles.registerButton, styles.shadowInput]} onPress={handleRegister}>
-            <Text style={styles.registerButtonText}>Cadastrar</Text>
+          <TouchableOpacity 
+            style={[styles.registerButton, styles.shadowInput, loading && {opacity: 0.7}]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            <Text style={styles.registerButtonText}>{loading ? "Cadastrando..." : "Cadastrar"}</Text>
           </TouchableOpacity>
         </View>
       </View>
