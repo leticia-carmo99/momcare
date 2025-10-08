@@ -71,19 +71,14 @@ export default function RegisterMother({ navigation }) {
     return !querySnapshot.empty;
   };
 
-  // Função para validar o usuário
   const validateUsername = (username) => {
-    // Apenas letras minúsculas, números, "." e "_"
     const re = /^[a-z0-9._]{1,15}$/;
     return re.test(username);
   };
 
   const handleUsernameChange = (text) => {
-    // remove @ para tratar só o texto
     let cleaned = text.startsWith('@') ? text.slice(1) : text;
-    // transforma em minúsculo e filtra caracteres inválidos
     const filtered = cleaned.toLowerCase().replace(/[^a-z0-9._]/g, "");
-    // limita a 15 caracteres
     if (filtered.length <= 15) {
       setUsername(filtered ? '@' + filtered : '');
     }
@@ -92,7 +87,6 @@ export default function RegisterMother({ navigation }) {
   const handleRegister = async () => {
     if (loading) return;
 
-    // Remover '@' do username para validações e salvar
     const cleanUsername = username.startsWith('@') ? username.slice(1) : username;
 
     if (!cleanUsername || !email || !cpf || !password || !confirmPassword) {
@@ -186,7 +180,6 @@ export default function RegisterMother({ navigation }) {
           </TouchableOpacity>
 
           <View style={styles.form}>
-            {/* Campo Usuário com label e mensagem sempre visível */}
             <View style={{ width: "85%", marginVertical: 12 }}>
               <TextInput
                 placeholder="Usuário:"
@@ -197,7 +190,7 @@ export default function RegisterMother({ navigation }) {
                 editable={!loading}
                 autoCapitalize="none"
                 autoCorrect={false}
-                maxLength={16} // 1 char para o '@' + 15
+                maxLength={16} 
                 keyboardType="default"
               />
               <Text style={styles.usernameHelperText}>
@@ -278,7 +271,6 @@ export default function RegisterMother({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* Modal customizado */}
       <Modal
         visible={modalVisible}
         transparent
@@ -337,7 +329,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 80,
     padding: 20,
     alignItems: "center",
-    flex: 1,  // expandir até o fim
+    flex: 1,  
   },
   input: {
     width: "100%",
