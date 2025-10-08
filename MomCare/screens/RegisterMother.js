@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { 
   View, Text, TextInput, TouchableOpacity, 
-  StyleSheet, ScrollView, Image, Modal 
+  StyleSheet, ScrollView, Image, Modal, KeyboardAvoidingView, Platform 
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons'; 
 import Textura from '../assets/textura.png';
@@ -123,93 +123,99 @@ export default function RegisterMother({ navigation }) {
 
   return (
     <>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View style={styles.container}>
-          <Image source={Textura} style={{height: '100%', position: 'absolute'}} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20} // ajuste conforme seu header
+      >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={styles.container}>
+            <Image source={Textura} style={{height: '100%', position: 'absolute'}} />
 
-          <TouchableOpacity style={styles.backButton} 
-            onPress={() => navigation.navigate("WelcomeMother")} 
-            disabled={loading}
-          >
-            <Ionicons 
-              name="chevron-back" 
-              size={62}   
-              color="white" 
-              style={{ 
-                textShadowColor: '#000', 
-                textShadowOffset: {width: 1, height: 1}, 
-                textShadowRadius: 1 
-              }} 
-            />
-          </TouchableOpacity>
-
-          <View style={styles.form}>
-            <TextInput
-              placeholder="E-mail:"
-              placeholderTextColor="#C31E65"
-              style={[styles.input, styles.shadowInput]}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              textContentType="emailAddress"
-              autoComplete="email"
-              editable={!loading}
-            />
-            <TextInput
-              placeholder="CPF:"
-              placeholderTextColor="#C31E65"
-              style={[styles.input, styles.shadowInput]}
-              value={cpf}
-              onChangeText={setCpf}
-              keyboardType="numeric"
-              editable={!loading}
-            />
-            <View style={[styles.passwordContainer, styles.passwordBorder]}>
-              <TextInput
-                placeholder="Senha:"
-                placeholderTextColor="#C31E65"
-                style={styles.inputPassword}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                editable={!loading}
-                textContentType="password"
-                autoComplete="password-new"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={loading}>
-                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={[styles.passwordContainer, styles.passwordBorder]}>
-              <TextInput
-                placeholder="Confirmar Senha:"
-                placeholderTextColor="#C31E65"
-                style={styles.inputPassword}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
-                editable={!loading}
-                textContentType="password"
-                autoComplete="password-new"
-              />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
-                <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.registerButton, styles.shadowInput, loading && {opacity: 0.7}]}
-              onPress={handleRegister}
+            <TouchableOpacity style={styles.backButton} 
+              onPress={() => navigation.navigate("WelcomeMother")} 
               disabled={loading}
             >
-              <Text style={styles.registerButtonText}>{loading ? "Cadastrando..." : "Cadastrar"}</Text>
+              <Ionicons 
+                name="chevron-back" 
+                size={62}   
+                color="white" 
+                style={{ 
+                  textShadowColor: '#000', 
+                  textShadowOffset: {width: 1, height: 1}, 
+                  textShadowRadius: 1 
+                }} 
+              />
             </TouchableOpacity>
+
+            <View style={styles.form}>
+              <TextInput
+                placeholder="E-mail:"
+                placeholderTextColor="#C31E65"
+                style={[styles.input, styles.shadowInput]}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="emailAddress"
+                autoComplete="email"
+                editable={!loading}
+              />
+              <TextInput
+                placeholder="CPF:"
+                placeholderTextColor="#C31E65"
+                style={[styles.input, styles.shadowInput]}
+                value={cpf}
+                onChangeText={setCpf}
+                keyboardType="numeric"
+                editable={!loading}
+              />
+              <View style={[styles.passwordContainer, styles.passwordBorder]}>
+                <TextInput
+                  placeholder="Senha:"
+                  placeholderTextColor="#C31E65"
+                  style={styles.inputPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  editable={!loading}
+                  textContentType="password"
+                  autoComplete="password-new"
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={loading}>
+                  <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={[styles.passwordContainer, styles.passwordBorder]}>
+                <TextInput
+                  placeholder="Confirmar Senha:"
+                  placeholderTextColor="#C31E65"
+                  style={styles.inputPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  editable={!loading}
+                  textContentType="password"
+                  autoComplete="password-new"
+                />
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
+                  <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.registerButton, styles.shadowInput, loading && {opacity: 0.7}]}
+                onPress={handleRegister}
+                disabled={loading}
+              >
+                <Text style={styles.registerButtonText}>{loading ? "Cadastrando..." : "Cadastrar"}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Modal customizado */}
       <Modal
