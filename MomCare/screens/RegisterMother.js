@@ -124,13 +124,18 @@ export default function RegisterMother({ navigation }) {
   return (
     <>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: '#C31E65' }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20} // ajuste conforme seu header
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 80} 
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          style={{ flex: 1 }}
+          keyboardDismissMode="on-drag"
+        >
           <View style={styles.container}>
-            <Image source={Textura} style={{height: '100%', position: 'absolute'}} />
+            <Image source={Textura} style={styles.backgroundImage} />
 
             <TouchableOpacity style={styles.backButton} 
               onPress={() => navigation.navigate("WelcomeMother")} 
@@ -255,9 +260,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#C31E65",
   },
+  backgroundImage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   backButton: {
     marginTop: 30,
     marginLeft: 20,
+    zIndex: 2,
   },
   form: {
     flex: 1,
