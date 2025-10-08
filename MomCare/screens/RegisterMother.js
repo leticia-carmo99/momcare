@@ -86,6 +86,11 @@ export default function RegisterMother({ navigation }) {
       return;
     }
 
+    if (password.length < 8) {
+      showModal("Erro", "A senha deve ter no mínimo 8 caracteres.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       showModal("Erro", "As senhas não coincidem.");
       return;
@@ -363,5 +368,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-
