@@ -10,6 +10,7 @@ import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebaseConfig";  
 
 export default function RegisterMother({ navigation }) {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
@@ -64,11 +65,43 @@ export default function RegisterMother({ navigation }) {
     return !querySnapshot.empty;
   };
 
+  const checkUsernameExists = async (username) => {
+    const q = query(collection(db, "maes"), where("username", "==", username));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+  };
+
+  // Função para validar o usuário
+  const validateUsername = (username) => {
+    // Apenas letras minúsculas, números, "." e "_"
+    const re = /^[a-z0-9._]{1,15}$/;
+    return re.test(username);
+  };
+
+  const handleUsernameChange = (text) => {
+    // remove @ para tratar só o texto
+    let cleaned = text.startsWith('@') ? text.slice(1) : text;
+    // transforma em minúsculo e filtra caracteres inválidos
+    const filtered = cleaned.toLowerCase().replace(/[^a-z0-9._]/g, "");
+    // limita a 15 caracteres
+    if (filtered.length <= 15) {
+      setUsername(filtered ? '@' + filtered : '');
+    }
+  };
+
   const handleRegister = async () => {
     if (loading) return;
 
-    if (!email || !cpf || !password || !confirmPassword) {
+    // Remover '@' do username para validações e salvar
+    const cleanUsername = username.startsWith('@') ? username.slice(1) : username;
+
+    if (!cleanUsername || !email || !cpf || !password || !confirmPassword) {
       showModal("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+
+    if (!validateUsername(cleanUsername)) {
+      showModal("Erro", "Usuário inválido. Use até 15 caracteres com letras minúsculas, números, '.' ou '_'.");
       return;
     }
 
@@ -94,6 +127,13 @@ export default function RegisterMother({ navigation }) {
 
     setLoading(true);
     try {
+      const usernameExists = await checkUsernameExists(cleanUsername);
+      if (usernameExists) {
+        showModal("Erro", "Este nome de usuário já está em uso.");
+        setLoading(false);
+        return;
+      }
+
       const emailExists = await checkEmailExists(email.trim().toLowerCase());
       if (emailExists) {
         showModal("Erro", "Este e-mail já está cadastrado.");
@@ -102,6 +142,7 @@ export default function RegisterMother({ navigation }) {
       }
 
       const dados = {
+        username: cleanUsername,
         email: email.trim().toLowerCase(),
         cpf: cpf.replace(/[^\d]+/g,''),
         senha: password,
@@ -145,28 +186,53 @@ export default function RegisterMother({ navigation }) {
           </TouchableOpacity>
 
           <View style={styles.form}>
-            <TextInput
-              placeholder="E-mail:"
-              placeholderTextColor="#C31E65"
-              style={[styles.input, styles.shadowInput]}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              textContentType="emailAddress"
-              autoComplete="email"
-              editable={!loading}
-            />
-            <TextInput
-              placeholder="CPF:"
-              placeholderTextColor="#C31E65"
-              style={[styles.input, styles.shadowInput]}
-              value={cpf}
-              onChangeText={setCpf}
-              keyboardType="numeric"
-              editable={!loading}
-            />
+            {/* Campo Usuário com label e mensagem sempre visível */}
+            <View style={{ width: "85%", marginVertical: 12 }}>
+              <TextInput
+                placeholder="Usuário:"
+                placeholderTextColor="#C31E65"
+                style={[styles.input, styles.shadowInput]}
+                value={username}
+                onChangeText={handleUsernameChange}
+                editable={!loading}
+                autoCapitalize="none"
+                autoCorrect={false}
+                maxLength={16} // 1 char para o '@' + 15
+                keyboardType="default"
+              />
+              <Text style={styles.usernameHelperText}>
+                Apenas 15 caracteres: letras minúsculas, números, '.' e '_'. Não se pode repetir nomes em uso.
+              </Text>
+            </View>
+
+            <View style={{ width: "85%", marginVertical: 12 }}>
+              <TextInput
+                placeholder="E-mail:"
+                placeholderTextColor="#C31E65"
+                style={[styles.input, styles.shadowInput]}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="emailAddress"
+                autoComplete="email"
+                editable={!loading}
+              />
+            </View>
+
+            <View style={{ width: "85%", marginVertical: 12 }}>
+              <TextInput
+                placeholder="CPF:"
+                placeholderTextColor="#C31E65"
+                style={[styles.input, styles.shadowInput]}
+                value={cpf}
+                onChangeText={setCpf}
+                keyboardType="numeric"
+                editable={!loading}
+              />
+            </View>
+
             <View style={[styles.passwordContainer, styles.passwordBorder]}>
               <TextInput
                 placeholder="Senha:"
@@ -271,15 +337,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 80,
     padding: 20,
     alignItems: "center",
-    flex: 1,  // <---- ADICIONADO para expandir até o fim
+    flex: 1,  // expandir até o fim
   },
   input: {
-    width: "85%",
+    width: "100%",
     height: 60,
     backgroundColor: "#fff",
     borderRadius: 15,
     paddingHorizontal: 15,
-    marginVertical: 12,
     borderWidth: 0,
     color: "#000",
   },
@@ -379,4 +444,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  usernameHelperText: {
+    color: '#C31E65',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 6,
+    fontStyle: 'italic',
+    opacity: 0.7,
+  },
 });
+
