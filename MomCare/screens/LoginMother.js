@@ -2,15 +2,25 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Textura from '../assets/textura.png';
+import {addDoc, doc, getDocs, query, where, orderBy} from 'firebase/firestore';
+import { db } from "../firebaseConfig";
 
 export default function LoginMother({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     console.log("Login:", { username, password });
     navigation.navigate("HomeMother");
+
+    const dados = {
+      username: username,
+      senha: password,
+    }
+
+    await addDoc(doc(db, 'maes'), dados);
+
   };
 
   return (
