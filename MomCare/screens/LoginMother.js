@@ -2,20 +2,20 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Textura from '../assets/textura.png';
-import {addDoc, doc, getDocs, query, where, orderBy} from 'firebase/firestore';
+import {addDoc, collection, getDocs, query, where, orderBy} from 'firebase/firestore';
 import { db } from "../firebaseConfig";
 
 export default function LoginMother({ navigation }) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    console.log("Login:", { username, password });
+    console.log("Login:", { email, password });
     navigation.navigate("HomeMother");
 
     const dados = {
-      username: username,
+      email: email,
       senha: password,
     }
 
@@ -46,11 +46,14 @@ export default function LoginMother({ navigation }) {
 
         <View style={styles.form}>
           <TextInput
-            placeholder="Usuário:"
+            placeholder="Email:"
             placeholderTextColor="#C31E65"
             style={[styles.input, styles.shadowInput]}
-            value={username}
-            onChangeText={setUsername}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
 
           <View style={[styles.passwordContainer, styles.shadowInput]}>
@@ -199,6 +202,3 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline"
   },
 });
-
-
-

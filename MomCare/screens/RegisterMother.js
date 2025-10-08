@@ -1,20 +1,44 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { Ionicons } from '@expo/vector-icons'; 
 import Textura from '../assets/textura.png';
 
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../firebaseConfig";  
+
 export default function RegisterMother({ navigation }) {
-  const [username, setUsername] = useState("");
-  const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleRegister = () => {
-    console.log("Cadastrado:", { username, cpf, email, password, confirmPassword });
-    navigation.navigate('HomeMother');  
+  const handleRegister = async () => {
+    if (!email || !cpf || !password || !confirmPassword) {
+      alert("Por favor, preencha todos os campos.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("As senhas não coincidem.");
+      return;
+    }
+
+    try {
+      const dados = {
+        email: email.trim().toLowerCase(),
+        cpf,
+        senha: password,
+      };
+
+      await addDoc(collection(db, "maes"), dados);
+
+      alert("Cadastro realizado com sucesso!");
+      navigation.navigate("HomeMother");
+    } catch (error) {
+      console.error("Erro ao cadastrar:", error);
+      alert("Erro ao cadastrar. Tente novamente.");
+    }
   };
 
   return (
@@ -39,11 +63,14 @@ export default function RegisterMother({ navigation }) {
 
         <View style={styles.form}>
           <TextInput
-            placeholder="Usuário:"
+            placeholder="E-mail:"
             placeholderTextColor="#C31E65"
             style={[styles.input, styles.shadowInput]}
-            value={username}
-            onChangeText={setUsername}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
           <TextInput
             placeholder="CPF:"
@@ -52,14 +79,6 @@ export default function RegisterMother({ navigation }) {
             value={cpf}
             onChangeText={setCpf}
             keyboardType="numeric"
-          />
-          <TextInput
-            placeholder="E-mail:"
-            placeholderTextColor="#C31E65"
-            style={[styles.input, styles.shadowInput]}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
           />
           <View style={[styles.passwordContainer, styles.passwordBorder]}>
             <TextInput
@@ -173,3 +192,4 @@ const styles = StyleSheet.create({
     fontSize: 18,            
   },
 });
+
