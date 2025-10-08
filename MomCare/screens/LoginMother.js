@@ -19,7 +19,7 @@ export default function LoginMother({ navigation }) {
       senha: password,
     }
 
-    await addDoc(doc(db, 'maes'), dados);
+    await addDoc(collection(db, 'maes'), dados);
 
   };
 
