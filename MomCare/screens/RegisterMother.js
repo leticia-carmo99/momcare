@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { 
   View, Text, TextInput, TouchableOpacity, 
-  StyleSheet, ScrollView, Image, Modal, KeyboardAvoidingView, Platform 
+  StyleSheet, ScrollView, Image, Modal 
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons'; 
 import Textura from '../assets/textura.png';
@@ -18,13 +18,12 @@ export default function RegisterMother({ navigation }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Estados para modal customizado
+  // Modal customizado
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [modalOnConfirm, setModalOnConfirm] = useState(null);
 
-  // Função para abrir modal
   const showModal = (title, message, onConfirm = null) => {
     setModalTitle(title);
     setModalMessage(message);
@@ -32,17 +31,15 @@ export default function RegisterMother({ navigation }) {
     setModalVisible(true);
   };
 
-  // Validação de email
   const validateEmail = (email) => {
     const re = /\S+@\S+\.\S+/;
     return re.test(email);
   };
 
-  // Validação de CPF
   const validateCPF = (cpf) => {
-    cpf = cpf.replace(/[^\d]+/g,''); // remove caracteres não numéricos
+    cpf = cpf.replace(/[^\d]+/g,'');
     if(cpf.length !== 11) return false;
-    if (/^(\d)\1+$/.test(cpf)) return false; // todos iguais
+    if (/^(\d)\1+$/.test(cpf)) return false;
 
     let sum = 0;
     let remainder;
@@ -61,15 +58,14 @@ export default function RegisterMother({ navigation }) {
     return true;
   };
 
-  // Verifica se email já está cadastrado
   const checkEmailExists = async (email) => {
     const q = query(collection(db, "maes"), where("email", "==", email));
     const querySnapshot = await getDocs(q);
-    return !querySnapshot.empty; // true se achou e-mail igual
+    return !querySnapshot.empty;
   };
 
   const handleRegister = async () => {
-    if (loading) return; // previne múltiplos cliques
+    if (loading) return;
 
     if (!email || !cpf || !password || !confirmPassword) {
       showModal("Erro", "Por favor, preencha todos os campos.");
@@ -107,7 +103,7 @@ export default function RegisterMother({ navigation }) {
 
       const dados = {
         email: email.trim().toLowerCase(),
-        cpf: cpf.replace(/[^\d]+/g,''), // salva só números no CPF
+        cpf: cpf.replace(/[^\d]+/g,''),
         senha: password,
       };
 
@@ -123,104 +119,98 @@ export default function RegisterMother({ navigation }) {
 
   return (
     <>
-      <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: '#C31E65' }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 80} 
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, backgroundColor: '#C31E65' }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
-        <ScrollView 
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-          style={{ flex: 1 }}
-          keyboardDismissMode="on-drag"
-        >
-          <View style={styles.container}>
-            <Image source={Textura} style={styles.backgroundImage} />
+        <View style={{ flex: 1 }}>
+          <Image source={Textura} style={styles.backgroundImage} />
 
-            <TouchableOpacity style={styles.backButton} 
-              onPress={() => navigation.navigate("WelcomeMother")} 
-              disabled={loading}
-            >
-              <Ionicons 
-                name="chevron-back" 
-                size={62}   
-                color="white" 
-                style={{ 
-                  textShadowColor: '#000', 
-                  textShadowOffset: {width: 1, height: 1}, 
-                  textShadowRadius: 1 
-                }} 
-              />
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.navigate("WelcomeMother")}
+            disabled={loading}
+          >
+            <Ionicons
+              name="chevron-back"
+              size={62}
+              color="white"
+              style={{
+                textShadowColor: '#000',
+                textShadowOffset: { width: 1, height: 1 },
+                textShadowRadius: 1,
+              }}
+            />
+          </TouchableOpacity>
 
-            <View style={styles.form}>
+          <View style={styles.form}>
+            <TextInput
+              placeholder="E-mail:"
+              placeholderTextColor="#C31E65"
+              style={[styles.input, styles.shadowInput]}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              autoComplete="email"
+              editable={!loading}
+            />
+            <TextInput
+              placeholder="CPF:"
+              placeholderTextColor="#C31E65"
+              style={[styles.input, styles.shadowInput]}
+              value={cpf}
+              onChangeText={setCpf}
+              keyboardType="numeric"
+              editable={!loading}
+            />
+            <View style={[styles.passwordContainer, styles.passwordBorder]}>
               <TextInput
-                placeholder="E-mail:"
+                placeholder="Senha:"
                 placeholderTextColor="#C31E65"
-                style={[styles.input, styles.shadowInput]}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                textContentType="emailAddress"
-                autoComplete="email"
+                style={styles.inputPassword}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
                 editable={!loading}
+                textContentType="password"
+                autoComplete="password-new"
               />
-              <TextInput
-                placeholder="CPF:"
-                placeholderTextColor="#C31E65"
-                style={[styles.input, styles.shadowInput]}
-                value={cpf}
-                onChangeText={setCpf}
-                keyboardType="numeric"
-                editable={!loading}
-              />
-              <View style={[styles.passwordContainer, styles.passwordBorder]}>
-                <TextInput
-                  placeholder="Senha:"
-                  placeholderTextColor="#C31E65"
-                  style={styles.inputPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  editable={!loading}
-                  textContentType="password"
-                  autoComplete="password-new"
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={loading}>
-                  <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={[styles.passwordContainer, styles.passwordBorder]}>
-                <TextInput
-                  placeholder="Confirmar Senha:"
-                  placeholderTextColor="#C31E65"
-                  style={styles.inputPassword}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
-                  editable={!loading}
-                  textContentType="password"
-                  autoComplete="password-new"
-                />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
-                  <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity 
-                style={[styles.registerButton, styles.shadowInput, loading && {opacity: 0.7}]}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                <Text style={styles.registerButtonText}>{loading ? "Cadastrando..." : "Cadastrar"}</Text>
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={loading}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
               </TouchableOpacity>
             </View>
+
+            <View style={[styles.passwordContainer, styles.passwordBorder]}>
+              <TextInput
+                placeholder="Confirmar Senha:"
+                placeholderTextColor="#C31E65"
+                style={styles.inputPassword}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                editable={!loading}
+                textContentType="password"
+                autoComplete="password-new"
+              />
+              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
+                <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.registerButton, styles.shadowInput, loading && { opacity: 0.7 }]}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              <Text style={styles.registerButtonText}>{loading ? "Cadastrando..." : "Cadastrar"}</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </ScrollView>
 
       {/* Modal customizado */}
       <Modal
@@ -276,20 +266,20 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   form: {
-    flex: 1,
     backgroundColor: "white",
     marginTop: 140,
     borderTopRightRadius: 80,
     padding: 20,
     alignItems: "center",
+    flex: 1,  // <---- ADICIONADO para expandir até o fim
   },
   input: {
     width: "85%",
-    height: 60,              
+    height: 60,
     backgroundColor: "#fff",
-    borderRadius: 15,        
+    borderRadius: 15,
     paddingHorizontal: 15,
-    marginVertical: 12,      
+    marginVertical: 12,
     borderWidth: 0,
     color: "#000",
   },
@@ -304,7 +294,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "85%",
-    height: 60,              
+    height: 60,
     borderRadius: 15,
     paddingHorizontal: 15,
     marginVertical: 12,
@@ -325,20 +315,20 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     width: "85%",
-    height: 60,              
+    height: 60,
     backgroundColor: "#fff",
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 20,
-    paddingHorizontal: 20,   
+    paddingHorizontal: 20,
     marginVertical: 12,
     borderWidth: 0,
   },
   registerButtonText: {
     color: "#C31E65",
     fontWeight: "bold",
-    fontSize: 18,            
+    fontSize: 18,
   },
   modalOverlay: {
     flex: 1,
