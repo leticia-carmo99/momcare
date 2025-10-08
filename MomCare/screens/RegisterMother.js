@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { 
   View, Text, TextInput, TouchableOpacity, 
-  StyleSheet, ScrollView, Image, Alert 
+  StyleSheet, ScrollView, Image, Modal 
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons'; 
 import Textura from '../assets/textura.png';
@@ -17,6 +17,20 @@ export default function RegisterMother({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Estados para modal customizado
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalOnConfirm, setModalOnConfirm] = useState(null);
+
+  // Função para abrir modal
+  const showModal = (title, message, onConfirm = null) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalOnConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
 
   // Validação de email
   const validateEmail = (email) => {
@@ -58,22 +72,22 @@ export default function RegisterMother({ navigation }) {
     if (loading) return; // previne múltiplos cliques
 
     if (!email || !cpf || !password || !confirmPassword) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      showModal("Erro", "Por favor, preencha todos os campos.");
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Erro", "Por favor, insira um e-mail válido.");
+      showModal("Erro", "Por favor, insira um e-mail válido.");
       return;
     }
 
     if (!validateCPF(cpf)) {
-      Alert.alert("Erro", "CPF inválido. Por favor, insira um CPF válido.");
+      showModal("Erro", "CPF inválido. Por favor, insira um CPF válido.");
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Erro", "As senhas não coincidem.");
+      showModal("Erro", "As senhas não coincidem.");
       return;
     }
 
@@ -81,7 +95,7 @@ export default function RegisterMother({ navigation }) {
     try {
       const emailExists = await checkEmailExists(email.trim().toLowerCase());
       if (emailExists) {
-        Alert.alert("Erro", "Este e-mail já está cadastrado.");
+        showModal("Erro", "Este e-mail já está cadastrado.");
         setLoading(false);
         return;
       }
@@ -94,104 +108,134 @@ export default function RegisterMother({ navigation }) {
 
       await addDoc(collection(db, "maes"), dados);
 
-      Alert.alert("Sucesso", "Cadastro realizado com sucesso!", [
-        { text: "OK", onPress: () => navigation.navigate("HomeMother") }
-      ]);
+      showModal("Sucesso", "Cadastro realizado com sucesso!", () => navigation.navigate("HomeMother"));
     } catch (error) {
       console.error("Erro ao cadastrar:", error);
-      Alert.alert("Erro", "Erro ao cadastrar. Tente novamente.");
+      showModal("Erro", "Erro ao cadastrar. Tente novamente.");
     }
     setLoading(false);
   };
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={styles.container}>
-        <Image source={Textura} style={{height: '100%', position: 'absolute'}} />
+    <>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={styles.container}>
+          <Image source={Textura} style={{height: '100%', position: 'absolute'}} />
 
-        <TouchableOpacity style={styles.backButton} 
-          onPress={() => navigation.navigate("WelcomeMother")} 
-          disabled={loading}
-        >
-          <Ionicons 
-            name="chevron-back" 
-            size={62}   
-            color="white" 
-            style={{ 
-              textShadowColor: '#000', 
-              textShadowOffset: {width: 1, height: 1}, 
-              textShadowRadius: 1 
-            }} 
-          />
-        </TouchableOpacity>
-
-        <View style={styles.form}>
-          <TextInput
-            placeholder="E-mail:"
-            placeholderTextColor="#C31E65"
-            style={[styles.input, styles.shadowInput]}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            textContentType="emailAddress"
-            autoComplete="email"
-            editable={!loading}
-          />
-          <TextInput
-            placeholder="CPF:"
-            placeholderTextColor="#C31E65"
-            style={[styles.input, styles.shadowInput]}
-            value={cpf}
-            onChangeText={setCpf}
-            keyboardType="numeric"
-            editable={!loading}
-          />
-          <View style={[styles.passwordContainer, styles.passwordBorder]}>
-            <TextInput
-              placeholder="Senha:"
-              placeholderTextColor="#C31E65"
-              style={styles.inputPassword}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              editable={!loading}
-              textContentType="password"
-              autoComplete="password-new"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={loading}>
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={[styles.passwordContainer, styles.passwordBorder]}>
-            <TextInput
-              placeholder="Confirmar Senha:"
-              placeholderTextColor="#C31E65"
-              style={styles.inputPassword}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showConfirmPassword}
-              editable={!loading}
-              textContentType="password"
-              autoComplete="password-new"
-            />
-            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
-              <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity 
-            style={[styles.registerButton, styles.shadowInput, loading && {opacity: 0.7}]}
-            onPress={handleRegister}
+          <TouchableOpacity style={styles.backButton} 
+            onPress={() => navigation.navigate("WelcomeMother")} 
             disabled={loading}
           >
-            <Text style={styles.registerButtonText}>{loading ? "Cadastrando..." : "Cadastrar"}</Text>
+            <Ionicons 
+              name="chevron-back" 
+              size={62}   
+              color="white" 
+              style={{ 
+                textShadowColor: '#000', 
+                textShadowOffset: {width: 1, height: 1}, 
+                textShadowRadius: 1 
+              }} 
+            />
           </TouchableOpacity>
+
+          <View style={styles.form}>
+            <TextInput
+              placeholder="E-mail:"
+              placeholderTextColor="#C31E65"
+              style={[styles.input, styles.shadowInput]}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              autoComplete="email"
+              editable={!loading}
+            />
+            <TextInput
+              placeholder="CPF:"
+              placeholderTextColor="#C31E65"
+              style={[styles.input, styles.shadowInput]}
+              value={cpf}
+              onChangeText={setCpf}
+              keyboardType="numeric"
+              editable={!loading}
+            />
+            <View style={[styles.passwordContainer, styles.passwordBorder]}>
+              <TextInput
+                placeholder="Senha:"
+                placeholderTextColor="#C31E65"
+                style={styles.inputPassword}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+                textContentType="password"
+                autoComplete="password-new"
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={loading}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.passwordContainer, styles.passwordBorder]}>
+              <TextInput
+                placeholder="Confirmar Senha:"
+                placeholderTextColor="#C31E65"
+                style={styles.inputPassword}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                editable={!loading}
+                textContentType="password"
+                autoComplete="password-new"
+              />
+              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
+                <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#C31E65" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.registerButton, styles.shadowInput, loading && {opacity: 0.7}]}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              <Text style={styles.registerButtonText}>{loading ? "Cadastrando..." : "Cadastrar"}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+
+      {/* Modal customizado */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={28} color="#C31E65" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>{modalTitle}</Text>
+            <Text style={styles.modalMessage}>{modalMessage}</Text>
+            <TouchableOpacity
+              style={styles.modalOkButton}
+              onPress={() => {
+                setModalVisible(false);
+                if (modalOnConfirm) modalOnConfirm();
+              }}
+            >
+              <Text style={styles.modalOkButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -269,5 +313,55 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 18,            
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 25,
+    padding: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 20,
+    position: "relative",
+  },
+  modalCloseButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#C31E65",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 25,
+  },
+  modalOkButton: {
+    backgroundColor: "#C31E65",
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+  },
+  modalOkButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
+
 
