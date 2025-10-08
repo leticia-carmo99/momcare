@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import WelcomeMotherScreen from "./screens/WelcomeMother";
 import LoginMotherScreen from "./screens/LoginMother";
 import RegisterMotherScreen from "./screens/RegisterMother";
+import HomeMotherScreen from "./screens/HomeMother";
 import DailyScreen from "./screens/Daily";
 import TasksMotherScreen from "./screens/TasksMother";
 import ForumMotherScreen from "./screens/ForumMother";
@@ -27,14 +28,14 @@ import SplashScreen from "./screens/Splash";
 import VisibleProfileScreen from "./screens/VisibleProfile";
 import PublishedArticlesScreen from "./screens/PublishedArticles";
 import AppDrawer from "./AppDrawer";
-
+import AddArticleScreen from "./screens/AddArticle";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="SplashScreen" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="AddArticle" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="WelcomeMother" component={WelcomeMotherScreen} />
         <Stack.Screen name="LoginMother" component={LoginMotherScreen} />
         <Stack.Screen name="RegisterMother" component={RegisterMotherScreen} />
@@ -58,11 +59,11 @@ export default function App() {
         <Stack.Screen name="TasksProfessional" component={TasksProfessionalScreen} />
         <Stack.Screen name="ForumProfessional" component={ForumProfessionalScreen} />
         <Stack.Screen name="ProfileProfessional" component={ProfileProfessionalScreen} />
-        <Stack.Screen name="SplashScreen" component={SplashScreen} />
+        <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="VisibleProfile" component={VisibleProfileScreen} />
         <Stack.Screen name="PublishedArticles" component={PublishedArticlesScreen} />
+        <Stack.Screen name="AddArticle" component={AddArticleScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-

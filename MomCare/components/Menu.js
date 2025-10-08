@@ -26,6 +26,11 @@ export default function Menu(props) {
         <Text style={styles.menuText}>Favoritos</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate("Exames")}>
+        <Ionicons name="medkit-outline" size={20} color="#555" />
+        <Text style={styles.menuText}>Leitura de Exames</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate("Sobre")}>
         <MaterialCommunityIcons name="information-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Sobre o app</Text>

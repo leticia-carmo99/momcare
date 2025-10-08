@@ -50,7 +50,7 @@ export default function HomeProfessional({ navigation }) {
           end={{ x: 1, y: 1 }}
           style={styles.newArticleButton}
         >
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AddArticle')}>
             <Text style={styles.newArticleText}>+ Novo artigo</Text>
           </TouchableOpacity>
         </LinearGradient>
