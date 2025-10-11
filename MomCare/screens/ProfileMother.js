@@ -26,7 +26,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 export default function ProfileMother({ navigation }) {
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -45,13 +45,18 @@ export default function ProfileMother({ navigation }) {
 
   useEffect(() => {
     const auth = getAuth();
-    const user = auth.currentUser;
 
-    if (user) {
-      setCurrentUserId(user.uid);
-    } else {
-      navigation.navigate("LoginMother");
-    }
+    // Escutando autenticação do usuário
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUserId(user.uid);
+      } else {
+        navigation.navigate("LoginMother");
+      }
+    });
+
+    // Cleanup do listener
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -486,64 +491,61 @@ const styles = StyleSheet.create({
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderColor: "#eee",
+    marginVertical: 10,
   },
   actionText: {
     marginLeft: 10,
-    fontSize: 16,
+    fontWeight: "bold",
+    fontSize: 14,
     color: "#555",
   },
   editButton: {
-    backgroundColor: "#f1f1f1",
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 10,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    alignItems: "center",
   },
   modalContent: {
+    width: "90%",
     backgroundColor: "#fff",
     borderRadius: 15,
-    padding: 25,
+    padding: 20,
   },
   modalTitle: {
     fontWeight: "bold",
-    fontSize: 20,
-    marginBottom: 20,
+    fontSize: 18,
+    marginBottom: 15,
     textAlign: "center",
-    color: "#C31E65",
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#ccc",
     borderRadius: 10,
-    padding: 10,
     marginBottom: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     fontSize: 16,
-    color: "#333",
+    color: "#000",
   },
   modalButtonsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
   modalButton: {
-    flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    marginHorizontal: 5,
+    paddingHorizontal: 20,
+    borderRadius: 15,
   },
   modalButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
+    textAlign: "center",
   },
 });
+
 
 
