@@ -1,91 +1,191 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image} from "react-native";
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, ScrollView, Image, Modal
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Textura from '../assets/textura.png';
 
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from "../firebaseConfig";
+
 export default function LoginProfessional({ navigation }) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    console.log("Login:", { username, password });
-    navigation.navigate("HomeProfessional");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalOnConfirm, setModalOnConfirm] = useState(null);
+
+  const showModal = (title, message, onConfirm = null) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalOnConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      showModal("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const emailQuery = query(
+        collection(db, "profissionais"),
+        where("email", "==", email.trim().toLowerCase())
+      );
+      const querySnapshot = await getDocs(emailQuery);
+
+      if (querySnapshot.empty) {
+        showModal("Erro", "E-mail não cadastrado.");
+        setLoading(false);
+        return;
+      }
+
+      let userFound = null;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.senha === password) {
+          userFound = data;
+        }
+      });
+
+      if (!userFound) {
+        showModal("Erro", "Senha incorreta.");
+        setLoading(false);
+        return;
+      }
+
+      showModal("Bem-vinda!", "Login realizado com sucesso!", () => {
+        navigation.navigate("HomeProfessional");
+      });
+
+    } catch (error) {
+      console.error("Erro ao fazer login:", error);
+      showModal("Erro", "Erro ao fazer login. Tente novamente.");
+    }
+    setLoading(false);
   };
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={styles.container}>
-       <Image source={Textura} style={styles.textura}/>
-    
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.navigate("WelcomeProfessional")} 
-        >
-          <Ionicons
-            name="chevron-back"
-            size={62}
-            color="white"
-            style={{
-              textShadowColor: "#000",
-              textShadowOffset: { width: 1, height: 1 },
-              textShadowRadius: 1,
-            }}
-          />
-        </TouchableOpacity>
-
-        <View style={styles.form}>
-          <TextInput
-            placeholder="Usuário:"
-            placeholderTextColor="#C31E65"
-            style={[styles.input, styles.shadowInput]}
-            value={username}
-            onChangeText={setUsername}
-          />
-
-          <View style={[styles.passwordContainer, styles.shadowInput]}>
-            <TextInput
-              placeholder="Senha:"
-              placeholderTextColor="#C31E65"
-              style={styles.inputPassword}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={{ paddingLeft: 10 }}
-            >
-              <Ionicons
-                name={showPassword ? "eye-off" : "eye"}
-                size={20}
-                color="#C31E65"
-              />
-            </TouchableOpacity>
-          </View>
+    <>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={styles.container}>
+          <Image source={Textura} style={styles.textura} />
 
           <TouchableOpacity
-            style={[styles.loginButton, styles.shadowInput]}
-            onPress={handleLogin}
+            style={styles.backButton}
+            onPress={() => navigation.navigate("WelcomeProfessional")}
           >
-            <Text style={styles.loginButtonText}>Entrar</Text>
+            <Ionicons
+              name="chevron-back"
+              size={62}
+              color="white"
+              style={{
+                textShadowColor: "#000",
+                textShadowOffset: { width: 1, height: 1 },
+                textShadowRadius: 1,
+              }}
+            />
           </TouchableOpacity>
 
-          <View style={styles.divider}>
-            <View style={styles.line}></View>
-            <Text style={styles.orText}>ou</Text>
-            <View style={styles.line}></View>
-          </View>
+          <View style={styles.form}>
+            <TextInput
+              placeholder="Email:"
+              placeholderTextColor="#C31E65"
+              style={[styles.input, styles.shadowInput]}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
+            />
 
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerTextNormal}>Não tem uma conta? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate("RegisterProfessional")}>
-              <Text style={styles.registerText}>Cadastrar</Text>
+            <View style={[styles.passwordContainer, styles.shadowInput]}>
+              <TextInput
+                placeholder="Senha:"
+                placeholderTextColor="#C31E65"
+                style={styles.inputPassword}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={{ paddingLeft: 10 }}
+                disabled={loading}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color="#C31E65"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.loginButton, styles.shadowInput, loading && { opacity: 0.7 }]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.loginButtonText}>
+                {loading ? "Entrando..." : "Entrar"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider}>
+              <View style={styles.line}></View>
+              <Text style={styles.orText}>ou</Text>
+              <View style={styles.line}></View>
+            </View>
+
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerTextNormal}>Não tem uma conta? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate("RegisterProfessional")}>
+                <Text style={styles.registerText}>Cadastrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* MODAL DE ERRO/SUCESSO */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={28} color="#C31E65" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>{modalTitle}</Text>
+            <Text style={styles.modalMessage}>{modalMessage}</Text>
+            <TouchableOpacity
+              style={styles.modalOkButton}
+              onPress={() => {
+                setModalVisible(false);
+                if (modalOnConfirm) modalOnConfirm();
+              }}
+            >
+              <Text style={styles.modalOkButtonText}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </Modal>
+    </>
   );
 }
 
@@ -188,6 +288,55 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textDecorationLine: "underline"
   },
+modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 25,
+    padding: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 20,
+    position: "relative",
+  },
+  modalCloseButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#C31E65",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 25,
+  },
+  modalOkButton: {
+    backgroundColor: "#C31E65",
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+  },
+  modalOkButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },  
 });
 
 
