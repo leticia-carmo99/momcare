@@ -96,7 +96,7 @@ export default function LoginProfessional({ navigation }) {
 
           <View style={styles.form}>
             <TextInput
-              placeholder="Email:"
+              placeholder="E-mail:"
               placeholderTextColor="#C31E65"
               style={[styles.input, styles.shadowInput]}
               value={email}
