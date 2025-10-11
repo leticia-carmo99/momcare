@@ -1,9 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 
-export default function ProfileMotherScreen({ navigation }) {
+export default function ProfileMotherScreen({ navigation, route }) {
+  const { user } = route.params;
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -15,10 +17,10 @@ export default function ProfileMotherScreen({ navigation }) {
             source={require("../assets/fotoperfil.png")}
             style={styles.profileImage}
           />
-          <Text style={styles.name}>Verônica de Oliveira</Text>
-          <Text style={styles.username}>@veta.2007</Text>
+          <Text style={styles.name}>{user.name || "Verônica de Oliveira"}</Text>
+          <Text style={styles.username}>@{user.username || "veta.2007"}</Text>
           <View style={styles.tag}>
-            <Text style={styles.tagText}>Mãe de primeira viagem</Text>
+            <Text style={styles.tagText}>{user.tag || "Mãe de primeira viagem"}</Text>
           </View>
         </View>
 
@@ -35,33 +37,33 @@ export default function ProfileMotherScreen({ navigation }) {
           <View style={styles.babyRow}>
             <View style={styles.babyInfoBox}>
               <Text style={styles.label}>Nome</Text>
-              <Text style={styles.value}>Sofia</Text>
+              <Text style={styles.value}>{user.babyName || "Sofia"}</Text>
             </View>
             <View style={styles.babyInfoBox}>
               <Text style={styles.label}>Idade</Text>
-              <Text style={styles.value}>3 meses e 12 dias</Text>
+              <Text style={styles.value}>{user.babyAge || "3 meses e 12 dias"}</Text>
             </View>
           </View>
 
           <View style={styles.babyRow}>
             <View style={styles.babyInfoBox}>
               <Text style={styles.label}>Nascimento</Text>
-              <Text style={styles.value}>28/09/2025</Text>
+              <Text style={styles.value}>{user.babyBirthDate || "28/09/2025"}</Text>
             </View>
             <View style={styles.babyInfoBox}>
               <Text style={styles.label}>Peso atual</Text>
-              <Text style={styles.value}>5.2Kg</Text>
+              <Text style={styles.value}>{user.babyWeight || "5.2Kg"}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>127</Text>
+            <Text style={styles.statNumber}>{user.daysAsMother || 127}</Text>
             <Text style={styles.statLabel}>dias como mãe</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>47</Text>
+            <Text style={styles.statNumber}>{user.articlesRead || 47}</Text>
             <Text style={styles.statLabel}>artigos lidos</Text>
           </View>
         </View>
@@ -71,7 +73,7 @@ export default function ProfileMotherScreen({ navigation }) {
 
           <TouchableOpacity
             style={styles.actionItem}
-            onPress={() => navigation.navigate("ForumMother")}
+            onPress={() => navigation.navigate("ForumMother", { user })}
           >
             <Ionicons name="people-outline" size={24} color="#555" />
             <Text style={styles.actionText}>Comunidade de mães</Text>
@@ -79,7 +81,7 @@ export default function ProfileMotherScreen({ navigation }) {
 
           <TouchableOpacity
             style={styles.actionItem}
-            onPress={() => navigation.navigate("Daily")}
+            onPress={() => navigation.navigate("Daily", { user })}
           >
             <MaterialCommunityIcons
               name="notebook-outline"
@@ -91,7 +93,7 @@ export default function ProfileMotherScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      <BottomNav navigation={navigation} activeScreen="ProfileMother" />
+      <BottomNav navigation={navigation} activeScreen="ProfileMother" user={user} />
     </View>
   );
 }

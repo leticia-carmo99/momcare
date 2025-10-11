@@ -2,13 +2,13 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
-export default function BottomNavMother({ navigation, activeScreen }) {
+export default function BottomNavMother({ navigation, activeScreen, user }) {
   return (
     <View style={styles.bottomNav}>
       
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => navigation.navigate('HomeMother')}
+        onPress={() => navigation.navigate('HomeMother', { user })}
       >
         <Ionicons 
           name="home-outline" 
@@ -22,7 +22,7 @@ export default function BottomNavMother({ navigation, activeScreen }) {
 
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => navigation.navigate('Daily')}
+        onPress={() => navigation.navigate('Daily', { user })}
       >
         <Ionicons 
           name={activeScreen === 'Daily' ? "book" : "book-outline"} 
@@ -36,7 +36,7 @@ export default function BottomNavMother({ navigation, activeScreen }) {
 
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => navigation.navigate('TasksMother')}
+        onPress={() => navigation.navigate('TasksMother', { user })}
       >
         <Ionicons 
           name="clipboard-outline" 
@@ -50,7 +50,7 @@ export default function BottomNavMother({ navigation, activeScreen }) {
 
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => navigation.navigate('ForumMother')}
+        onPress={() => navigation.navigate('ForumMother', { user })}
       >
         <Ionicons 
           name={activeScreen === 'ForumMother' ? "chatbubbles" : "chatbubbles-outline"} 
@@ -64,7 +64,7 @@ export default function BottomNavMother({ navigation, activeScreen }) {
 
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => navigation.navigate('ProfileMother')}
+        onPress={() => navigation.navigate('ProfileMother', { user })}
       >
         <Ionicons 
           name={activeScreen === 'ProfileMother' ? "person" : "person-outline"} 
@@ -105,6 +105,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 3,
     fontWeight: '600',
-    color: '#000',  
   }
 });
+

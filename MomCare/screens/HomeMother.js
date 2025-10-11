@@ -5,7 +5,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNavMother";
 import babyImage from "../assets/baby.png";
 
-export default function HomeMother({ navigation }) {
+export default function HomeMother({ navigation, route }) {
+  // Pega o usuário que veio da tela LoginMother
+  const user = route?.params?.user || null;
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView
@@ -22,7 +25,10 @@ export default function HomeMother({ navigation }) {
             <Ionicons name="heart-outline" size={28} color="#fff" />
           </LinearGradient>
           <View style={{ marginLeft: 12, flex: 1 }}>
-            <Text style={styles.greeting}>Boa tarde, Verônica!</Text>
+            {/* Aqui você pode personalizar a saudação usando o nome do usuário */}
+            <Text style={styles.greeting}>
+              Boa tarde, {user?.nome || "Verônica"}!
+            </Text>
             <Text style={styles.question}>Como você está hoje?</Text>
           </View>
           <TouchableOpacity onPress={() => navigation.openDrawer?.()} style={styles.menuButton}>
@@ -105,7 +111,8 @@ export default function HomeMother({ navigation }) {
         </View>
       </ScrollView>
 
-      <BottomNav navigation={navigation} activeScreen="HomeMother" />
+      {/* Passa o usuário para o BottomNav */}
+      <BottomNav navigation={navigation} activeScreen="HomeMother" user={user} />
     </View>
   );
 }
@@ -293,3 +300,4 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
