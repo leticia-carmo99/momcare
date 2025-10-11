@@ -1,9 +1,155 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  Modal,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 
+import { db } from "../firebaseConfig";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+
+import { getAuth } from "firebase/auth";
+
 export default function ProfileMother({ navigation }) {
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  const [motherData, setMotherData] = useState(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+
+  const [babies, setBabies] = useState([]);
+  const [loadingBabies, setLoadingBabies] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [babyName, setBabyName] = useState("");
+  const [babyBirthDate, setBabyBirthDate] = useState("");
+  const [babyWeight, setBabyWeight] = useState("");
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+      setCurrentUserId(user.uid);
+    } else {
+      navigation.navigate("LoginMother");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchMotherData();
+      fetchBabies();
+    }
+  }, [currentUserId]);
+
+  const fetchMotherData = async () => {
+    try {
+      const docRef = doc(db, "maes", currentUserId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setMotherData(docSnap.data());
+        setNameInput(docSnap.data().nome || "");
+      } else {
+        console.log("Mãe não encontrada");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados da mãe:", error);
+    }
+  };
+
+  const fetchBabies = async () => {
+    setLoadingBabies(true);
+    try {
+      const q = query(
+        collection(db, "bebes"),
+        where("maeId", "==", currentUserId)
+      );
+      const querySnapshot = await getDocs(q);
+      const babiesList = [];
+      querySnapshot.forEach((doc) => {
+        babiesList.push({ id: doc.id, ...doc.data() });
+      });
+      setBabies(babiesList);
+    } catch (error) {
+      console.error("Erro ao buscar bebês:", error);
+    }
+    setLoadingBabies(false);
+  };
+
+  const handleSaveName = async () => {
+    if (!nameInput.trim()) {
+      Alert.alert("Erro", "O nome não pode estar vazio.");
+      return;
+    }
+    try {
+      const docRef = doc(db, "maes", currentUserId);
+      await updateDoc(docRef, {
+        nome: nameInput.trim(),
+      });
+      setMotherData((prev) => ({ ...prev, nome: nameInput.trim() }));
+      setEditingName(false);
+      Alert.alert("Sucesso", "Nome atualizado!");
+    } catch (error) {
+      console.error("Erro ao atualizar nome:", error);
+      Alert.alert("Erro", "Não foi possível atualizar o nome.");
+    }
+  };
+
+  const handleAddBaby = async () => {
+    if (!babyName.trim() || !babyBirthDate.trim() || !babyWeight.trim()) {
+      Alert.alert("Erro", "Preencha todos os campos do bebê.");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "bebes"), {
+        maeId: currentUserId,
+        nome: babyName.trim(),
+        nascimento: babyBirthDate.trim(),
+        pesoAtual: babyWeight.trim(),
+      });
+
+      setBabyName("");
+      setBabyBirthDate("");
+      setBabyWeight("");
+      setModalVisible(false);
+      fetchBabies();
+      Alert.alert("Sucesso", "Bebê adicionado!");
+    } catch (error) {
+      console.error("Erro ao adicionar bebê:", error);
+      Alert.alert("Erro", "Não foi possível adicionar o bebê.");
+    }
+  };
+
+  if (!currentUserId) {
+    return (
+      <View
+        style={[styles.container, { justifyContent: "center", alignItems: "center" }]}
+      >
+        <ActivityIndicator size="large" color="#C31E65" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -15,8 +161,50 @@ export default function ProfileMother({ navigation }) {
             source={require("../assets/fotoperfil.png")}
             style={styles.profileImage}
           />
-          <Text style={styles.name}>Verônica de Oliveira</Text>
-          <Text style={styles.username}>@veta.2007</Text>
+
+          {editingName ? (
+            <>
+              <TextInput
+                style={[
+                  styles.name,
+                  { borderBottomWidth: 1, borderColor: "#C31E65", width: 220, textAlign: "center" },
+                ]}
+                value={nameInput}
+                onChangeText={setNameInput}
+                editable={editingName}
+                autoFocus
+              />
+              <View style={{ flexDirection: "row", marginTop: 4 }}>
+                <TouchableOpacity
+                  onPress={handleSaveName}
+                  style={[styles.editButton, { marginRight: 15 }]}
+                >
+                  <Text style={{ color: "#C31E65", fontWeight: "bold" }}>Salvar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEditingName(false);
+                    setNameInput(motherData?.nome || "");
+                  }}
+                  style={styles.editButton}
+                >
+                  <Text style={{ color: "#888" }}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={styles.name}>{motherData?.nome || "Carregando..."}</Text>
+              <TouchableOpacity
+                onPress={() => setEditingName(true)}
+                style={{ marginLeft: 8 }}
+              >
+                <Ionicons name="pencil" size={20} color="#C31E65" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <Text style={styles.username}>@{motherData?.username || "carregando..."}</Text>
           <View style={styles.tag}>
             <Text style={styles.tagText}>Mãe de primeira viagem</Text>
           </View>
@@ -32,27 +220,45 @@ export default function ProfileMother({ navigation }) {
             <Text style={styles.babyCardTitle}>Informações do bebê</Text>
           </View>
 
-          <View style={styles.babyRow}>
-            <View style={styles.babyInfoBox}>
-              <Text style={styles.label}>Nome</Text>
-              <Text style={styles.value}>Sofia</Text>
-            </View>
-            <View style={styles.babyInfoBox}>
-              <Text style={styles.label}>Idade</Text>
-              <Text style={styles.value}>3 meses e 12 dias</Text>
-            </View>
-          </View>
+          {loadingBabies ? (
+            <ActivityIndicator color="#C31E65" size="large" />
+          ) : babies.length === 0 ? (
+            <Text
+              style={{
+                color: "#666",
+                fontStyle: "italic",
+                marginVertical: 10,
+                textAlign: "center",
+              }}
+            >
+              Nenhum bebê cadastrado ainda.
+            </Text>
+          ) : (
+            babies.map((baby) => (
+              <View key={baby.id} style={styles.babyRow}>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Nome</Text>
+                  <Text style={styles.value}>{baby.nome}</Text>
+                </View>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Nascimento</Text>
+                  <Text style={styles.value}>{baby.nascimento}</Text>
+                </View>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Peso atual</Text>
+                  <Text style={styles.value}>{baby.pesoAtual}</Text>
+                </View>
+              </View>
+            ))
+          )}
 
-          <View style={styles.babyRow}>
-            <View style={styles.babyInfoBox}>
-              <Text style={styles.label}>Nascimento</Text>
-              <Text style={styles.value}>28/09/2025</Text>
-            </View>
-            <View style={styles.babyInfoBox}>
-              <Text style={styles.label}>Peso atual</Text>
-              <Text style={styles.value}>5.2Kg</Text>
-            </View>
-          </View>
+          <TouchableOpacity
+            style={styles.addBabyButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="#C31E65" />
+            <Text style={styles.addBabyButtonText}>Adicionar novo bebê</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.statsContainer}>
@@ -92,6 +298,61 @@ export default function ProfileMother({ navigation }) {
       </ScrollView>
 
       <BottomNav navigation={navigation} activeScreen="ProfileMother" />
+
+      {/* Modal para adicionar bebê */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Adicionar Bebê</Text>
+
+            <TextInput
+              placeholder="Nome do bebê"
+              value={babyName}
+              onChangeText={setBabyName}
+              style={styles.modalInput}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="Data de nascimento (dd/mm/aaaa)"
+              value={babyBirthDate}
+              onChangeText={setBabyBirthDate}
+              style={styles.modalInput}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="Peso atual (ex: 5.2Kg)"
+              value={babyWeight}
+              onChangeText={setBabyWeight}
+              style={styles.modalInput}
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+            />
+
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#C31E65" }]}
+                onPress={handleAddBaby}
+              >
+                <Text style={styles.modalButtonText}>Salvar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#ccc" }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: "#333" }]}>
+                  Cancelar
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -102,130 +363,187 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   scrollContent: {
-    paddingBottom: 90,
+    paddingBottom: 80,
   },
   header: {
+    paddingHorizontal: 20,
+    paddingTop: 40,
     alignItems: "center",
-    marginTop: 60,
-    marginBottom: 20,
   },
   profileImage: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    marginBottom: 12,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
   },
   name: {
-    fontSize: 20,
     fontWeight: "bold",
-    color: "#C31E65",
+    fontSize: 22,
+    marginTop: 15,
   },
   username: {
+    fontWeight: "bold",
     fontSize: 14,
-    color: "#888",
-    marginBottom: 8,
+    color: "#C31E65",
   },
   tag: {
-    backgroundColor: "#FFD6EC",
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderRadius: 25,
     borderWidth: 1,
     borderColor: "#C31E65",
+    borderRadius: 30,
+    paddingVertical: 2,
+    paddingHorizontal: 15,
+    marginTop: 8,
   },
   tagText: {
     color: "#C31E65",
-    fontSize: 13,
+    fontWeight: "bold",
+    fontSize: 11,
   },
   cardWithShadow: {
-    backgroundColor: "#FAFAFA",
-    padding: 15,
+    backgroundColor: "#FFF",
     marginHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginBottom: 25,
+    marginTop: 25,
+    borderRadius: 15,
+    padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 6.27,
+    elevation: 10,
   },
   babyHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 15,
   },
   babyCardTitle: {
-    color: "#C31E65",
-    fontWeight: "600",
-    marginLeft: 6,
-    fontSize: 14,
+    marginLeft: 8,
+    fontWeight: "bold",
+    fontSize: 16,
   },
   babyRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    paddingVertical: 15,
   },
   babyInfoBox: {
-    flex: 1,
-    marginRight: 10,
+    marginBottom: 6,
   },
   label: {
-    fontSize: 12,
+    fontWeight: "bold",
     color: "#666",
+    fontSize: 12,
   },
   value: {
-    fontSize: 14,
+    fontSize: 15,
+    marginTop: 2,
+  },
+  addBabyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+  },
+  addBabyButtonText: {
+    color: "#C31E65",
+    marginLeft: 5,
     fontWeight: "bold",
-    color: "#000",
   },
   statsContainer: {
+    marginTop: 30,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     marginHorizontal: 20,
-    marginBottom: 25,
   },
   statBox: {
-    backgroundColor: "#FFECF7",
-    paddingVertical: 18,
-    paddingHorizontal: 25,
-    borderRadius: 10,
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    width: "45%",
+    padding: 20,
     alignItems: "center",
-    flex: 1,
-    marginHorizontal: 5,
-    borderWidth: 1,
-    borderColor: "#F7E2EB",
-    shadowColor: "#C31E65",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6.27,
+    elevation: 10,
   },
   statNumber: {
-    fontSize: 22,
     fontWeight: "bold",
+    fontSize: 22,
     color: "#C31E65",
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 14,
+    marginTop: 8,
     color: "#666",
-    textAlign: "center",
   },
   actionsTitle: {
-    fontSize: 14,
     fontWeight: "bold",
-    marginBottom: 10,
-    color: "#000",
+    fontSize: 18,
+    marginBottom: 15,
   },
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderColor: "#eee",
   },
   actionText: {
     marginLeft: 10,
-    fontSize: 14,
+    fontSize: 16,
+    color: "#555",
+  },
+  editButton: {
+    backgroundColor: "#f1f1f1",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 25,
+  },
+  modalTitle: {
+    fontWeight: "bold",
+    fontSize: 20,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#C31E65",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+    fontSize: 16,
     color: "#333",
   },
+  modalButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 });
+
+

@@ -152,7 +152,6 @@ export default function LoginMother({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* MODAL DE ERRO/SUCESSO */}
       <Modal
         visible={modalVisible}
         transparent

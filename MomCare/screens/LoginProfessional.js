@@ -156,7 +156,6 @@ export default function LoginProfessional({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* MODAL DE ERRO/SUCESSO */}
       <Modal
         visible={modalVisible}
         transparent
