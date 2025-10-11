@@ -4,7 +4,17 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 
 export default function ProfileMotherScreen({ navigation, route }) {
-  const { user } = route.params;
+  const user = route?.params?.user;
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ marginTop: 100, textAlign: "center", fontSize: 16, color: "#C31E65" }}>
+          Usuário não encontrado. Faça login novamente.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -17,10 +27,10 @@ export default function ProfileMotherScreen({ navigation, route }) {
             source={require("../assets/fotoperfil.png")}
             style={styles.profileImage}
           />
-          <Text style={styles.name}>{user.name || "Verônica de Oliveira"}</Text>
-          <Text style={styles.username}>@{user.username || "veta.2007"}</Text>
+          <Text style={styles.name}>Verônica de Oliveira</Text>
+          <Text style={styles.username}>@{user.username}</Text>
           <View style={styles.tag}>
-            <Text style={styles.tagText}>{user.tag || "Mãe de primeira viagem"}</Text>
+            <Text style={styles.tagText}>Mãe de primeira viagem</Text>
           </View>
         </View>
 
@@ -231,6 +241,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 });
+
 
 
 
