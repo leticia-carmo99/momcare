@@ -12,16 +12,14 @@ import {
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
-import { doc, updateDoc, getFirestore } from "firebase/firestore";
-import { getApp } from "firebase/app";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";  // Ajuste para onde seu db é importado
 
 export default function ProfileMotherScreen({ navigation, route }) {
   const user = route?.params?.user;
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const db = getFirestore(getApp());
 
   useEffect(() => {
     if (user?.name) {
@@ -61,7 +59,10 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
       Alert.alert("Sucesso", "Nome atualizado com sucesso!");
       setIsEditing(false);
-      // Aqui você pode atualizar o usuário no estado global, se quiser
+
+      // Se quiser, atualizar o objeto `user` local para refletir a mudança:
+      user.name = name.trim();
+
     } catch (error) {
       console.error("Erro ao atualizar nome:", error);
       Alert.alert(
@@ -84,6 +85,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
             source={require("../assets/fotoperfil.png")}
             style={styles.profileImage}
           />
+
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {isEditing ? (
               <>
@@ -352,13 +354,3 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 });
-
-
-
-
-
-
-
-
-
-
