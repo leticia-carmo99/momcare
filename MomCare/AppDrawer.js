@@ -1,3 +1,4 @@
+// AppDrawer.js
 import React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import HomeMotherScreen from "./screens/HomeMother";
@@ -5,13 +6,19 @@ import Menu from "./components/Menu";
 
 const Drawer = createDrawerNavigator();
 
-export default function AppDrawer() {
+export default function AppDrawer({ route }) {
+  const user = route?.params?.user;
+
   return (
     <Drawer.Navigator
-      drawerContent={(props) => <Menu {...props} />} 
+      drawerContent={(props) => <Menu {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Drawer.Screen name="MotherRoot" component={AppDrawer} />
+      <Drawer.Screen
+        name="HomeMother"
+        component={HomeMotherScreen}
+        initialParams={{ user }}
+      />
     </Drawer.Navigator>
   );
 }
