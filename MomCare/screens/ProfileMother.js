@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,31 +7,29 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Modal,
   Alert,
+  ActivityIndicator,
 } from "react-native";
-import {
-  Ionicons,
-  MaterialCommunityIcons,
-  Feather,
-} from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 import { doc, updateDoc, getFirestore } from "firebase/firestore";
 import { getApp } from "firebase/app";
 
-// Função mockada para simular envio ao banco de dados
-async function updateUserName(userId, newName) {
-  // Aqui você deve substituir pela sua lógica de envio real
-  console.log("Salvando nome no banco:", userId, newName);
-  return Promise.resolve(); // Simula sucesso
-}
-
 export default function ProfileMotherScreen({ navigation, route }) {
   const user = route?.params?.user;
+  const [name, setName] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState(user?.name || "");
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newNameInput, setNewNameInput] = useState("");
+  const db = getFirestore(getApp());
+
+  useEffect(() => {
+    if (user?.name) {
+      setName(user.name);
+    } else {
+      setName("");
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -50,20 +48,30 @@ export default function ProfileMotherScreen({ navigation, route }) {
     );
   }
 
-  const handleEditName = async () => {
-    if (!newNameInput.trim()) {
-      Alert.alert("Erro", "Digite um nome válido.");
+  async function saveName() {
+    if (!name.trim()) {
+      Alert.alert("Erro", "O nome não pode ser vazio.");
       return;
     }
 
+    setLoading(true);
     try {
-      await updateUserName(user.id, newNameInput); // Envie para o banco
-      setName(newNameInput); // Atualiza localmente
-      setIsModalVisible(false);
+      const userDocRef = doc(db, "maes", user.id);
+      await updateDoc(userDocRef, { name: name.trim() });
+
+      Alert.alert("Sucesso", "Nome atualizado com sucesso!");
+      setIsEditing(false);
+      // Aqui você pode atualizar o usuário no estado global, se quiser
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível atualizar o nome.");
+      console.error("Erro ao atualizar nome:", error);
+      Alert.alert(
+        "Erro",
+        "Não foi possível atualizar o nome. Tente novamente mais tarde."
+      );
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -76,14 +84,52 @@ export default function ProfileMotherScreen({ navigation, route }) {
             source={require("../assets/fotoperfil.png")}
             style={styles.profileImage}
           />
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>
-              {name ? name : "Insira seu nome"}
-            </Text>
-            <TouchableOpacity onPress={() => setIsModalVisible(true)}>
-              <Feather name="edit-2" size={16} color="#C31E65" style={{ marginLeft: 8 }} />
-            </TouchableOpacity>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {isEditing ? (
+              <>
+                <TextInput
+                  style={styles.nameInput}
+                  value={name}
+                  onChangeText={setName}
+                  autoFocus
+                  editable={!loading}
+                  onSubmitEditing={saveName}
+                  returnKeyType="done"
+                />
+                {loading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color="#C31E65"
+                    style={{ marginLeft: 10 }}
+                  />
+                ) : (
+                  <TouchableOpacity onPress={saveName} style={{ marginLeft: 10 }}>
+                    <Ionicons name="checkmark" size={24} color="#C31E65" />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsEditing(false);
+                    setName(user.name || "");
+                  }}
+                  style={{ marginLeft: 10 }}
+                >
+                  <Ionicons name="close" size={24} color="#C31E65" />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={styles.name}>{name || "Insira seu nome"}</Text>
+                <TouchableOpacity
+                  onPress={() => setIsEditing(true)}
+                  style={{ marginLeft: 8 }}
+                >
+                  <Ionicons name="pencil" size={20} color="#C31E65" />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
+
           <Text style={styles.username}>@{user.username}</Text>
           <View style={styles.tag}>
             <Text style={styles.tagText}>Mãe de primeira viagem</Text>
@@ -160,49 +206,48 @@ export default function ProfileMotherScreen({ navigation, route }) {
       </ScrollView>
 
       <BottomNav navigation={navigation} activeScreen="ProfileMother" user={user} />
-
-      {/* Modal de Edição do Nome */}
-      <Modal visible={isModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Editar nome</Text>
-            <TextInput
-              value={newNameInput}
-              onChangeText={setNewNameInput}
-              placeholder="Digite seu nome"
-              style={styles.input}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.saveButton} onPress={handleEditName}>
-                <Text style={styles.buttonText}>Salvar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setIsModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  scrollContent: { paddingBottom: 90 },
-  header: { alignItems: "center", marginTop: 60, marginBottom: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  scrollContent: {
+    paddingBottom: 90,
+  },
+  header: {
+    alignItems: "center",
+    marginTop: 60,
+    marginBottom: 20,
+  },
   profileImage: {
     width: 130,
     height: 130,
     borderRadius: 65,
     marginBottom: 12,
   },
-  nameRow: { flexDirection: "row", alignItems: "center" },
-  name: { fontSize: 20, fontWeight: "bold", color: "#C31E65" },
-  username: { fontSize: 14, color: "#888", marginBottom: 8 },
+  name: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#C31E65",
+  },
+  nameInput: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#C31E65",
+    borderBottomWidth: 1,
+    borderColor: "#C31E65",
+    paddingVertical: 2,
+    minWidth: 150,
+  },
+  username: {
+    fontSize: 14,
+    color: "#888",
+    marginBottom: 8,
+  },
   tag: {
     backgroundColor: "#FFD6EC",
     paddingHorizontal: 14,
@@ -211,7 +256,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#C31E65",
   },
-  tagText: { color: "#C31E65", fontSize: 13 },
+  tagText: {
+    color: "#C31E65",
+    fontSize: 13,
+  },
   cardWithShadow: {
     backgroundColor: "#FAFAFA",
     padding: 15,
@@ -242,9 +290,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
   },
-  babyInfoBox: { flex: 1, marginRight: 10 },
-  label: { fontSize: 12, color: "#666" },
-  value: { fontSize: 14, fontWeight: "bold", color: "#000" },
+  babyInfoBox: {
+    flex: 1,
+    marginRight: 10,
+  },
+  label: {
+    fontSize: 12,
+    color: "#666",
+  },
+  value: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000",
+  },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -267,8 +325,16 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 6,
   },
-  statNumber: { fontSize: 22, fontWeight: "bold", color: "#C31E65" },
-  statLabel: { fontSize: 12, color: "#666", textAlign: "center" },
+  statNumber: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#C31E65",
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+  },
   actionsTitle: {
     fontSize: 14,
     fontWeight: "bold",
@@ -280,58 +346,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  actionText: { marginLeft: 10, fontSize: 14, color: "#333" },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    width: "85%",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 20,
-    elevation: 6,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 12,
-    color: "#C31E65",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#CCC",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  actionText: {
+    marginLeft: 10,
     fontSize: 14,
-    marginBottom: 16,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  saveButton: {
-    backgroundColor: "#C31E65",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  cancelButton: {
-    backgroundColor: "#999",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
+    color: "#333",
   },
 });
+
 
 
 
