@@ -8,12 +8,12 @@ export default function BottomNavMother({ navigation, activeScreen, user }) {
       
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => navigation.navigate('HomeMother', { user })}
+        onPress={() => navigation.navigate('MotherRoot', { user })}
       >
         <Ionicons 
           name="home-outline" 
           size={26} 
-          color={activeScreen === 'HomeMother' ? '#C31E65' : '#999'} 
+          color={activeScreen === '' ? '#C31E65' : '#999'} 
         />
         <Text style={[styles.navText, { color: activeScreen === 'HomeMother' ? '#C31E65' : '#999' }]}>
           Home

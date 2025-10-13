@@ -13,7 +13,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebaseConfig";  // Ajuste para onde seu db é importado
+import { db } from "../firebaseConfig";  
 
 export default function ProfileMotherScreen({ navigation, route }) {
   const user = route?.params?.user;
@@ -60,7 +60,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
       Alert.alert("Sucesso", "Nome atualizado com sucesso!");
       setIsEditing(false);
 
-      // Se quiser, atualizar o objeto `user` local para refletir a mudança:
       user.name = name.trim();
 
     } catch (error) {
