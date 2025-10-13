@@ -11,7 +11,7 @@ export default function AppDrawer() {
       drawerContent={(props) => <Menu {...props} />} 
       screenOptions={{ headerShown: false }}
     >
-      <Drawer.Screen name="HomeMother" component={HomeMotherScreen} />
+      <Drawer.Screen name="MotherRoot" component={AppDrawer} />
     </Drawer.Navigator>
   );
 }

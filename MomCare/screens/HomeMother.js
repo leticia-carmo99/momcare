@@ -6,8 +6,9 @@ import BottomNav from "../components/BottomNavMother";
 import babyImage from "../assets/baby.png";
 
 export default function HomeMother({ navigation, route }) {
-  // Pega o usuário que veio da tela LoginMother
+  
   const user = route?.params?.user || null;
+  console.log("DEBUG HOME: Objeto user recebido:", user);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -25,9 +26,9 @@ export default function HomeMother({ navigation, route }) {
             <Ionicons name="heart-outline" size={28} color="#fff" />
           </LinearGradient>
           <View style={{ marginLeft: 12, flex: 1 }}>
-            {/* Aqui você pode personalizar a saudação usando o nome do usuário */}
+            
             <Text style={styles.greeting}>
-              Boa tarde, {user?.nome || "Verônica"}!
+              Boa tarde, {user?.username}!
             </Text>
             <Text style={styles.question}>Como você está hoje?</Text>
           </View>
@@ -111,7 +112,6 @@ export default function HomeMother({ navigation, route }) {
         </View>
       </ScrollView>
 
-      {/* Passa o usuário para o BottomNav */}
       <BottomNav navigation={navigation} activeScreen="HomeMother" user={user} />
     </View>
   );

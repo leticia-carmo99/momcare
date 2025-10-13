@@ -39,7 +39,7 @@ export default function App() {
         <Stack.Screen name="WelcomeMother" component={WelcomeMotherScreen} />
         <Stack.Screen name="LoginMother" component={LoginMotherScreen} />
         <Stack.Screen name="RegisterMother" component={RegisterMotherScreen} />
-        <Stack.Screen name="HomeMother" component={AppDrawer} />
+        <Stack.Screen name="MotherRoot" component={AppDrawer} />
         <Stack.Screen name="Daily" component={DailyScreen} />
         <Stack.Screen name="TasksMother" component={TasksMotherScreen} />
         <Stack.Screen name="ForumMother" component={ForumMotherScreen} />

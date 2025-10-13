@@ -47,7 +47,7 @@ export default function LoginMother({ navigation }) {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         if (data.senha === password) {
-          userFound = { id: doc.id, ...data }; // inclui id se quiser
+          userFound = { id: doc.id, ...data }; 
         }
       });
 
@@ -59,7 +59,7 @@ export default function LoginMother({ navigation }) {
 
       showModal("Bem-vinda!", "Login realizado com sucesso!", () => {
         setModalVisible(false);
-        navigation.navigate("HomeMother", { user: userFound });  // Passando o usuário para HomeMother
+        navigation.navigate("MotherRoot", { user: userFound });  
       });
 
     } catch (error) {
