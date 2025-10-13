@@ -13,7 +13,7 @@ export default function BottomNavMother({ navigation, activeScreen, user }) {
         <Ionicons 
           name="home-outline" 
           size={26} 
-          color={activeScreen === '' ? '#C31E65' : '#999'} 
+          color={activeScreen === 'HomeMother' ? '#C31E65' : '#999'} 
         />
         <Text style={[styles.navText, { color: activeScreen === 'HomeMother' ? '#C31E65' : '#999' }]}>
           Home
