@@ -23,7 +23,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [babies, setBabies] = useState([]);
+  const [baby, setBaby] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [babyName, setBabyName] = useState("");
   const [babyBirthDate, setBabyBirthDate] = useState(new Date());
@@ -39,31 +39,31 @@ export default function ProfileMotherScreen({ navigation, route }) {
   }, [user]);
 
   useEffect(() => {
-    async function fetchBabies() {
+    // buscar dados do bebê associados à mãe
+    async function fetchBaby() {
       try {
         const q = query(
           collection(db, "bebes"),
           where("userId", "==", user.id)
         );
         const snapshot = await getDocs(q);
-        const babiesList = [];
-        snapshot.forEach(docSnap => {
+        if (!snapshot.empty) {
+          const docSnap = snapshot.docs[0];
           const data = docSnap.data();
-          babiesList.push({
+          setBaby({
             id: docSnap.id,
             nome: data.nome,
             dataNascimento: data.dataNascimento,
             pesoAtual: data.pesoAtual,
           });
-        });
-        setBabies(babiesList);
+        }
       } catch (err) {
-        console.error("Erro ao buscar bebês:", err);
+        console.error("Erro ao buscar bebê:", err);
       }
     }
 
     if (user?.id) {
-      fetchBabies();
+      fetchBaby();
     }
   }, [user]);
 
@@ -97,6 +97,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
       Alert.alert("Sucesso", "Nome atualizado com sucesso!");
       setIsEditing(false);
+      // atualiza localmente
       user.name = name.trim();
     } catch (error) {
       console.error("Erro ao atualizar nome:", error);
@@ -112,34 +113,18 @@ export default function ProfileMotherScreen({ navigation, route }) {
   function calcularIdade(dataNascimento) {
     const nascimento = new Date(dataNascimento);
     const hoje = new Date();
+    const diff = hoje - nascimento;
+    const dias = diff / (1000 * 60 * 60 * 24);
+    const meses = Math.floor(dias / 30.44);
+    const anos = Math.floor(meses / 12);
+    const mesesRestantes = meses % 12;
+    const diasRestantes = Math.floor(dias % 30.44);
 
-    let anos = hoje.getFullYear() - nascimento.getFullYear();
-    let meses = hoje.getMonth() - nascimento.getMonth();
-    let dias = hoje.getDate() - nascimento.getDate();
-
-    if (dias < 0) {
-      meses--;
-      dias += new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate();
-    }
-    if (meses < 0) {
-      anos--;
-      meses += 12;
-    }
-
-    let idadeStr = "";
     if (anos > 0) {
-      idadeStr += `${anos} ${anos === 1 ? "ano" : "anos"}`;
+      return `${anos}a ${mesesRestantes}m`;
+    } else {
+      return `${meses}m ${diasRestantes}d`;
     }
-    if (meses > 0) {
-      if (idadeStr) idadeStr += " ";
-      idadeStr += `${meses} ${meses === 1 ? "mês" : "meses"}`;
-    }
-
-    if (!idadeStr) {
-      idadeStr = "0 meses";
-    }
-
-    return idadeStr;
   }
 
   function formatarData(data) {
@@ -161,21 +146,16 @@ export default function ProfileMotherScreen({ navigation, route }) {
         pesoAtual: babyWeight.trim(),
       });
 
-      // Atualiza lista localmente para exibir o novo bebê sem recarregar
-      setBabies(prev => [
-        ...prev,
-        {
-          id: docRef.id,
-          nome: babyName.trim(),
-          dataNascimento: babyBirthDate.toISOString(),
-          pesoAtual: babyWeight.trim(),
-        },
-      ]);
+      setBaby({
+        id: docRef.id,
+        nome: babyName.trim(),
+        dataNascimento: babyBirthDate.toISOString(),
+        pesoAtual: babyWeight.trim(),
+      });
 
       setShowModal(false);
       setBabyName("");
       setBabyWeight("");
-      setBabyBirthDate(new Date());
     } catch (err) {
       console.error("Erro ao salvar bebê:", err);
       Alert.alert("Erro", "Não foi possível salvar. Tente novamente.");
@@ -256,57 +236,83 @@ export default function ProfileMotherScreen({ navigation, route }) {
             <Text style={styles.babyCardTitle}>Informações do bebê</Text>
           </View>
 
-          {babies.length > 0 ? (
-            babies.map((baby) => (
-              <View key={baby.id} style={styles.babyCard}>
-                <View style={styles.babyRow}>
-                  <View style={styles.babyInfoBox}>
-                    <Text style={styles.label}>Nome</Text>
-                    <Text style={styles.value}>{baby.nome}</Text>
-                  </View>
-                  <View style={styles.babyInfoBox}>
-                    <Text style={styles.label}>Idade</Text>
-                    <Text style={styles.value}>{calcularIdade(baby.dataNascimento)}</Text>
-                  </View>
+          {baby ? (
+            <>
+              <View style={styles.babyRow}>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Nome</Text>
+                  <Text style={styles.value}>{baby.nome}</Text>
                 </View>
-
-                <View style={styles.babyRow}>
-                  <View style={styles.babyInfoBox}>
-                    <Text style={styles.label}>Nascimento</Text>
-                    <Text style={styles.value}>{formatarData(baby.dataNascimento)}</Text>
-                  </View>
-                  <View style={styles.babyInfoBox}>
-                    <Text style={styles.label}>Peso atual</Text>
-                    <Text style={styles.value}>{baby.pesoAtual} kg</Text>
-                  </View>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Idade</Text>
+                  <Text style={styles.value}>
+                    {calcularIdade(baby.dataNascimento)}
+                  </Text>
                 </View>
               </View>
-            ))
+
+              <View style={styles.babyRow}>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Nascimento</Text>
+                  <Text style={styles.value}>
+                    {formatarData(baby.dataNascimento)}
+                  </Text>
+                </View>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Peso atual</Text>
+                  <Text style={styles.value}>{baby.pesoAtual} Kg</Text>
+                </View>
+              </View>
+            </>
           ) : (
-            <Text style={{ textAlign: "center", color: "#999", marginVertical: 10 }}>
-              Nenhum bebê cadastrado
-            </Text>
+            <TouchableOpacity
+              style={styles.addBabyButton}
+              onPress={() => setShowModal(true)}
+            >
+              <Text style={styles.addBabyButtonText}>+ Adicionar bebê</Text>
+            </TouchableOpacity>
           )}
+        </View>
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{user.daysAsMother || 127}</Text>
+            <Text style={styles.statLabel}>dias como mãe</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{user.articlesRead || 47}</Text>
+            <Text style={styles.statLabel}>artigos lidos</Text>
+          </View>
+        </View>
+
+        <View style={styles.cardWithShadow}>
+          <Text style={styles.actionsTitle}>Ações Rápidas</Text>
 
           <TouchableOpacity
-            style={styles.addBabyButton}
-            onPress={() => setShowModal(true)}
+            style={styles.actionItem}
+            onPress={() => navigation.navigate("ForumMother", { user })}
           >
-            <Text style={styles.addBabyButtonText}>+ Adicionar bebê</Text>
+            <Ionicons name="people-outline" size={24} color="#555" />
+            <Text style={styles.actionText}>Comunidade de mães</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionItem}
+            onPress={() => navigation.navigate("Daily", { user })}
+          >
+            <MaterialCommunityIcons
+              name="notebook-outline"
+              size={24}
+              color="#555"
+            />
+            <Text style={styles.actionText}>Diário da mamãe</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      <BottomNav active="profile" navigation={navigation} />
+      <BottomNav navigation={navigation} activeScreen="ProfileMother" user={user} />
 
-      {/* Modal para adicionar bebê */}
-      <Modal
-        isVisible={showModal}
-        onBackdropPress={() => setShowModal(false)}
-        onBackButtonPress={() => setShowModal(false)}
-        animationIn="fadeIn"
-        animationOut="fadeOut"
-      >
+      <Modal isVisible={showModal}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Adicionar bebê</Text>
 
@@ -319,10 +325,10 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
           <TouchableOpacity
             onPress={() => setShowDatePicker(true)}
-            style={styles.datePickerButton}
+            style={styles.modalInput}
           >
-            <Text style={styles.datePickerText}>
-              Data de nascimento: {formatarData(babyBirthDate)}
+            <Text style={{ color: "#C31E65" }}>
+              Nascimento: {formatarData(babyBirthDate)}
             </Text>
           </TouchableOpacity>
 
@@ -331,46 +337,28 @@ export default function ProfileMotherScreen({ navigation, route }) {
               value={babyBirthDate}
               mode="date"
               display="default"
-              maximumDate={new Date()}
               onChange={(event, selectedDate) => {
                 setShowDatePicker(false);
-                if (selectedDate) {
-                  setBabyBirthDate(selectedDate);
-                }
+                if (selectedDate) setBabyBirthDate(selectedDate);
               }}
+              maximumDate={new Date()}
             />
           )}
 
           <TextInput
-            placeholder="Peso atual (kg)"
+            placeholder="Peso atual (Kg)"
             value={babyWeight}
-            onChangeText={(text) => {
-              // aceitar apenas números e ponto, até 3 caracteres (ex: 9.5 ou 12)
-              const newText = text.replace(/[^0-9.]/g, '').slice(0, 4);
-              setBabyWeight(newText);
-            }}
+            onChangeText={setBabyWeight}
             keyboardType="numeric"
             style={styles.modalInput}
           />
 
-          <View style={styles.modalButtons}>
-            <TouchableOpacity
-              onPress={() => {
-                setShowModal(false);
-                setBabyName("");
-                setBabyWeight("");
-                setBabyBirthDate(new Date());
-              }}
-              style={[styles.modalButton, styles.cancelButton]}
-            >
-              <Text style={styles.modalButtonText}>Cancelar</Text>
+          <View style={styles.modalButtonsRow}>
+            <TouchableOpacity onPress={() => setShowModal(false)}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={salvarBebe}
-              style={[styles.modalButton, styles.saveButton]}
-            >
-              <Text style={[styles.modalButtonText, { color: "#fff" }]}>Salvar</Text>
+            <TouchableOpacity onPress={salvarBebe}>
+              <Text style={styles.modalSaveText}>Salvar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -384,196 +372,188 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 80,
+    paddingBottom: 90,
   },
-
   header: {
-    marginBottom: 20,
     alignItems: "center",
+    marginTop: 60,
+    marginBottom: 20,
   },
-
   profileImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     marginBottom: 12,
   },
-
   name: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#C31E65",
   },
-
   nameInput: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#C31E65",
     borderBottomWidth: 1,
-    borderBottomColor: "#C31E65",
+    borderColor: "#C31E65",
+    paddingVertical: 2,
     minWidth: 150,
   },
-
   username: {
-    color: "#C31E65",
-    marginTop: 4,
+    fontSize: 14,
+    color: "#888",
+    marginBottom: 8,
   },
-
   tag: {
-    backgroundColor: "#FDE8F2",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginTop: 8,
+    backgroundColor: "#FFD6EC",
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "#C31E65",
   },
-
   tagText: {
     color: "#C31E65",
-    fontWeight: "bold",
+    fontSize: 13,
   },
-
   cardWithShadow: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: "#FAFAFA",
     padding: 15,
+    marginHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+    marginBottom: 25,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
-
   babyHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
-
   babyCardTitle: {
     color: "#C31E65",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
     marginLeft: 6,
+    fontSize: 14,
   },
-
-  babyCard: {
-    borderWidth: 1,
-    borderColor: "#C31E65",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-  },
-
   babyRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 10,
   },
-
   babyInfoBox: {
     flex: 1,
+    marginRight: 10,
   },
-
   label: {
     fontSize: 12,
-    color: "#C31E65",
-    fontWeight: "bold",
+    color: "#666",
   },
-
   value: {
-    fontSize: 16,
-    color: "#C31E65",
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000",
   },
-
   addBabyButton: {
-    backgroundColor: "#fff",
+    backgroundColor: "#FFD6EC",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#C31E65",
   },
-
   addBabyButtonText: {
     color: "#C31E65",
     fontWeight: "bold",
-    fontSize: 16,
   },
-
-  modalContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-  },
-
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#C31E65",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-
-  modalInput: {
-    borderWidth: 1,
-    borderColor: "#C31E65",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    fontSize: 16,
-    color: "#C31E65",
-    marginBottom: 15,
-  },
-
-  datePickerButton: {
-    borderWidth: 1,
-    borderColor: "#C31E65",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    marginBottom: 15,
-    justifyContent: "center",
-  },
-
-  datePickerText: {
-    color: "#C31E65",
-    fontSize: 16,
-  },
-
-  modalButtons: {
+  statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginBottom: 25,
   },
-
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+  statBox: {
+    backgroundColor: "#FFECF7",
+    paddingVertical: 18,
+    paddingHorizontal: 25,
+    borderRadius: 10,
     alignItems: "center",
-  },
-
-  cancelButton: {
-    backgroundColor: "#fff",
+    flex: 1,
+    marginHorizontal: 5,
     borderWidth: 1,
-    borderColor: "#C31E65",
-    marginRight: 10,
+    borderColor: "#F7E2EB",
+    shadowColor: "#C31E65",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
   },
-
-  saveButton: {
-    backgroundColor: "#C31E65",
-  },
-
-  modalButtonText: {
-    fontSize: 16,
+  statNumber: {
+    fontSize: 22,
     fontWeight: "bold",
     color: "#C31E65",
   },
-}); 
+  statLabel: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+  },
+  actionsTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#000",
+  },
+  actionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  actionText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: "#333",
+  },
+
+  // Modal styles
+  modalContainer: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#F7E2EB",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#C31E65",
+    marginBottom: 12,
+  },
+  modalInput: {
+    borderBottomWidth: 1,
+    borderColor: "#C31E65",
+    marginBottom: 10,
+    paddingVertical: 6,
+    fontSize: 14,
+  },
+  modalButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 10,
+  },
+  modalCancelText: {
+    color: "#888",
+    marginRight: 20,
+    fontSize: 14,
+  },
+  modalSaveText: {
+    color: "#C31E65",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+});
