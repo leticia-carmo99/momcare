@@ -141,9 +141,10 @@ export default function RegisterMother({ navigation }) {
         senha: password,
       };
 
-      await addDoc(collection(db, "maes"), dados);
+      const docRef = await addDoc(collection(db, "maes"), dados);
+      const user = { ...dados, id: docRef.id };
 
-      showModal("Sucesso", "Cadastro realizado com sucesso!", () => navigation.navigate("HomeMother"));
+      showModal("Sucesso", "Cadastro realizado com sucesso!", () => navigation.navigate("MotherRoot", { user }));
     } catch (error) {
       console.error("Erro ao cadastrar:", error);
       showModal("Erro", "Erro ao cadastrar. Tente novamente.");

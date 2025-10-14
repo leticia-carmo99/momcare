@@ -12,8 +12,10 @@ import {
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebaseConfig";  
+import { doc, updateDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { db } from "../firebaseConfig";
+import Modal from "react-native-modal";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function ProfileMotherScreen({ navigation, route }) {
   const user = route?.params?.user;
@@ -21,11 +23,47 @@ export default function ProfileMotherScreen({ navigation, route }) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [baby, setBaby] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [babyName, setBabyName] = useState("");
+  const [babyBirthDate, setBabyBirthDate] = useState(new Date());
+  const [babyWeight, setBabyWeight] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   useEffect(() => {
     if (user?.name) {
       setName(user.name);
     } else {
       setName("");
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // buscar dados do bebê associados à mãe
+    async function fetchBaby() {
+      try {
+        const q = query(
+          collection(db, "bebes"),
+          where("userId", "==", user.id)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const docSnap = snapshot.docs[0];
+          const data = docSnap.data();
+          setBaby({
+            id: docSnap.id,
+            nome: data.nome,
+            dataNascimento: data.dataNascimento,
+            pesoAtual: data.pesoAtual,
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar bebê:", err);
+      }
+    }
+
+    if (user?.id) {
+      fetchBaby();
     }
   }, [user]);
 
@@ -59,9 +97,8 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
       Alert.alert("Sucesso", "Nome atualizado com sucesso!");
       setIsEditing(false);
-
+      // atualiza localmente
       user.name = name.trim();
-
     } catch (error) {
       console.error("Erro ao atualizar nome:", error);
       Alert.alert(
@@ -70,6 +107,58 @@ export default function ProfileMotherScreen({ navigation, route }) {
       );
     } finally {
       setLoading(false);
+    }
+  }
+
+  function calcularIdade(dataNascimento) {
+    const nascimento = new Date(dataNascimento);
+    const hoje = new Date();
+    const diff = hoje - nascimento;
+    const dias = diff / (1000 * 60 * 60 * 24);
+    const meses = Math.floor(dias / 30.44);
+    const anos = Math.floor(meses / 12);
+    const mesesRestantes = meses % 12;
+    const diasRestantes = Math.floor(dias % 30.44);
+
+    if (anos > 0) {
+      return `${anos}a ${mesesRestantes}m`;
+    } else {
+      return `${meses}m ${diasRestantes}d`;
+    }
+  }
+
+  function formatarData(data) {
+    const date = new Date(data);
+    return date.toLocaleDateString("pt-BR");
+  }
+
+  async function salvarBebe() {
+    if (!babyName.trim() || !babyWeight.trim()) {
+      Alert.alert("Erro", "Preencha todos os campos.");
+      return;
+    }
+
+    try {
+      const docRef = await addDoc(collection(db, "bebes"), {
+        userId: user.id,
+        nome: babyName.trim(),
+        dataNascimento: babyBirthDate.toISOString(),
+        pesoAtual: babyWeight.trim(),
+      });
+
+      setBaby({
+        id: docRef.id,
+        nome: babyName.trim(),
+        dataNascimento: babyBirthDate.toISOString(),
+        pesoAtual: babyWeight.trim(),
+      });
+
+      setShowModal(false);
+      setBabyName("");
+      setBabyWeight("");
+    } catch (err) {
+      console.error("Erro ao salvar bebê:", err);
+      Alert.alert("Erro", "Não foi possível salvar. Tente novamente.");
     }
   }
 
@@ -147,27 +236,42 @@ export default function ProfileMotherScreen({ navigation, route }) {
             <Text style={styles.babyCardTitle}>Informações do bebê</Text>
           </View>
 
-          <View style={styles.babyRow}>
-            <View style={styles.babyInfoBox}>
-              <Text style={styles.label}>Nome</Text>
-              <Text style={styles.value}>{user.babyName || "Sofia"}</Text>
-            </View>
-            <View style={styles.babyInfoBox}>
-              <Text style={styles.label}>Idade</Text>
-              <Text style={styles.value}>{user.babyAge || "3 meses e 12 dias"}</Text>
-            </View>
-          </View>
+          {baby ? (
+            <>
+              <View style={styles.babyRow}>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Nome</Text>
+                  <Text style={styles.value}>{baby.nome}</Text>
+                </View>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Idade</Text>
+                  <Text style={styles.value}>
+                    {calcularIdade(baby.dataNascimento)}
+                  </Text>
+                </View>
+              </View>
 
-          <View style={styles.babyRow}>
-            <View style={styles.babyInfoBox}>
-              <Text style={styles.label}>Nascimento</Text>
-              <Text style={styles.value}>{user.babyBirthDate || "28/09/2025"}</Text>
-            </View>
-            <View style={styles.babyInfoBox}>
-              <Text style={styles.label}>Peso atual</Text>
-              <Text style={styles.value}>{user.babyWeight || "5.2Kg"}</Text>
-            </View>
-          </View>
+              <View style={styles.babyRow}>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Nascimento</Text>
+                  <Text style={styles.value}>
+                    {formatarData(baby.dataNascimento)}
+                  </Text>
+                </View>
+                <View style={styles.babyInfoBox}>
+                  <Text style={styles.label}>Peso atual</Text>
+                  <Text style={styles.value}>{baby.pesoAtual} Kg</Text>
+                </View>
+              </View>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={styles.addBabyButton}
+              onPress={() => setShowModal(true)}
+            >
+              <Text style={styles.addBabyButtonText}>+ Adicionar bebê</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.statsContainer}>
@@ -207,6 +311,58 @@ export default function ProfileMotherScreen({ navigation, route }) {
       </ScrollView>
 
       <BottomNav navigation={navigation} activeScreen="ProfileMother" user={user} />
+
+      <Modal isVisible={showModal}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Adicionar bebê</Text>
+
+          <TextInput
+            placeholder="Nome do bebê"
+            value={babyName}
+            onChangeText={setBabyName}
+            style={styles.modalInput}
+          />
+
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            style={styles.modalInput}
+          >
+            <Text style={{ color: "#C31E65" }}>
+              Nascimento: {formatarData(babyBirthDate)}
+            </Text>
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={babyBirthDate}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowDatePicker(false);
+                if (selectedDate) setBabyBirthDate(selectedDate);
+              }}
+              maximumDate={new Date()}
+            />
+          )}
+
+          <TextInput
+            placeholder="Peso atual (Kg)"
+            value={babyWeight}
+            onChangeText={setBabyWeight}
+            keyboardType="numeric"
+            style={styles.modalInput}
+          />
+
+          <View style={styles.modalButtonsRow}>
+            <TouchableOpacity onPress={() => setShowModal(false)}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={salvarBebe}>
+              <Text style={styles.modalSaveText}>Salvar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -304,6 +460,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#000",
   },
+  addBabyButton: {
+    backgroundColor: "#FFD6EC",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  addBabyButtonText: {
+    color: "#C31E65",
+    fontWeight: "bold",
+  },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -351,5 +518,42 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     color: "#333",
+  },
+
+  // Modal styles
+  modalContainer: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#F7E2EB",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#C31E65",
+    marginBottom: 12,
+  },
+  modalInput: {
+    borderBottomWidth: 1,
+    borderColor: "#C31E65",
+    marginBottom: 10,
+    paddingVertical: 6,
+    fontSize: 14,
+  },
+  modalButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 10,
+  },
+  modalCancelText: {
+    color: "#888",
+    marginRight: 20,
+    fontSize: 14,
+  },
+  modalSaveText: {
+    color: "#C31E65",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

@@ -8,7 +8,6 @@ import babyImage from "../assets/baby.png";
 export default function HomeMother({ navigation, route }) {
   
   const user = route?.params?.user || null;
-  console.log("DEBUG HOME: Objeto user recebido:", user);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -28,7 +27,7 @@ export default function HomeMother({ navigation, route }) {
           <View style={{ marginLeft: 12, flex: 1 }}>
             
             <Text style={styles.greeting}>
-              Boa tarde, {user?.username}!
+              Boa tarde{user?.name ? `, ${user.name}!` : "!"}
             </Text>
             <Text style={styles.question}>Como você está hoje?</Text>
           </View>
