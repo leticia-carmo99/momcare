@@ -576,4 +576,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#C31E65",
   },
-});
+}); 
