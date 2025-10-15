@@ -395,7 +395,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
   
   // Função para remover o bebê (agora usa o Custom Alert)
   function confirmRemoveBaby() {
-    setShowEditModal(false); // CORRIGIDO: Usa setShowEditModal para fechar o modal de edição
+    showEditModal(false); // Fecha o modal de edição antes de mostrar a confirmação
     showCustomAlert(
       "Confirmar Remoção ⚠️",
       `Tem certeza que deseja remover o bebê ${editingBaby.nome}? Essa ação é irreversível e apagará todos os dados de registro relacionados.`,
