@@ -27,7 +27,6 @@ import { db } from "../firebaseConfig";
 import Modal from "react-native-modal";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
-// --- Custom Alert Modal Component ---
 const CustomAlertModal = ({ isVisible, title, message, onConfirm, onCancel, confirmText = "OK", cancelText }) => (
   <Modal isVisible={isVisible} backdropTransitionOutTiming={0}>
     <View style={customStyles.modalOverlay}>
@@ -54,7 +53,6 @@ const CustomAlertModal = ({ isVisible, title, message, onConfirm, onCancel, conf
   </Modal>
 );
 
-// --- Funções Auxiliares de Estética e Alerta ---
 const customStyles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
@@ -63,12 +61,12 @@ const customStyles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    width: "85%", // Ajustado para 85% para melhor visualização
+    width: "85%", 
     backgroundColor: "white",
-    borderRadius: 20, // Suavemente arredondado
+    borderRadius: 20, 
     padding: 25,
     alignItems: "center",
-    shadowColor: "#C31E65", // Sombra na cor da paleta
+    shadowColor: "#C31E65", 
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -84,7 +82,7 @@ const customStyles = StyleSheet.create({
     zIndex: 1,
   },
   modalTitle: {
-    fontSize: 20, // Um pouco menor que o original
+    fontSize: 20, 
     fontWeight: "bold",
     color: "#C31E65",
     marginBottom: 10,
@@ -137,7 +135,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
   const [babyList, setBabyList] = useState([]);
   const [isFirstTimeMom, setIsFirstTimeMom] = useState(true);
   
-  // Estados para o Custom Alert
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
@@ -146,15 +143,12 @@ export default function ProfileMotherScreen({ navigation, route }) {
   const [alertConfirmText, setAlertConfirmText] = useState("OK");
   const [alertCancelText, setAlertCancelText] = useState(null);
 
-
-  // Estados para o Modal de ADICIONAR
   const [showModal, setShowModal] = useState(false);
   const [babyName, setBabyName] = useState("");
   const [babyBirthDate, setBabyBirthDate] = useState(new Date());
   const [babyWeight, setBabyWeight] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Estados para o Modal de EDITAR
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingBaby, setEditingBaby] = useState(null);
   const [editBabyName, setEditBabyName] = useState("");
@@ -170,7 +164,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
     }
   }, [user]);
 
-  // Função centralizada para mostrar o alerta customizado
   const showCustomAlert = useCallback((title, message, onConfirm, onCancel = null, confirmText = "OK", cancelText = "Cancelar") => {
     setAlertTitle(title);
     setAlertMessage(message);
@@ -187,7 +180,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
     setAlertVisible(true);
   }, []);
 
-  // Função para buscar e ordenar os bebês (o mais velho primeiro)
   const fetchBabies = useCallback(async () => {
     try {
       if (!user?.id) return;
@@ -201,7 +193,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
           ...docSnap.data(),
         }));
 
-        // Ordena os bebês: o mais velho (dataNascimento menor) primeiro
         const sortedBabies = babies.sort((a, b) => new Date(a.dataNascimento) - new Date(b.dataNascimento));
 
         setBabyList(sortedBabies);
@@ -268,16 +259,13 @@ export default function ProfileMotherScreen({ navigation, route }) {
     const hoje = new Date();
     const diferencaMs = hoje - nascimento;
     
-    // Cálculo de Idade em anos e meses ou meses e dias
     const diferencaDias = Math.floor(diferencaMs / (1000 * 60 * 60 * 24));
     
-    // Aproximação do número de meses (30.44 dias por mês em média)
     const mesesTotais = Math.floor(diferencaDias / 30.44);
 
     const anos = Math.floor(mesesTotais / 12);
     const meses = mesesTotais % 12;
     
-    // Calcula os dias restantes
     let idadeTexto = "";
 
     if (anos > 0) {
@@ -288,7 +276,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
     } else if (meses > 0) {
         idadeTexto += `${meses} ${meses === 1 ? "mês" : "meses"}`;
         
-        // Se a criança tem menos de um ano, calculamos os dias restantes exatos
         const diasRestantes = Math.floor(diferencaDias % 30.44);
         if (diasRestantes > 0) {
           idadeTexto += ` e ${diasRestantes} ${diasRestantes === 1 ? "dia" : "dias"}`;
@@ -328,7 +315,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
         pesoAtual: babyWeight.trim(),
       };
 
-      // Adiciona o novo bebê e reordena a lista
       const updatedList = [...babyList, novoBebe].sort((a, b) => new Date(a.dataNascimento) - new Date(b.dataNascimento));
       setBabyList(updatedList);
       setIsFirstTimeMom(updatedList.length === 1);
@@ -343,7 +329,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
     }
   }
 
-  // Função para abrir o modal de edição
   function openEditModal(baby) {
     setEditingBaby(baby);
     setEditBabyName(baby.nome);
@@ -352,7 +337,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
     setShowEditModal(true);
   }
 
-  // Função para salvar as edições do bebê
   async function saveBabyEdit() {
     if (!editBabyName.trim() || !editBabyWeight.trim()) {
       Alert.alert("Erro", "Preencha todos os campos.");
@@ -374,7 +358,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
       await updateDoc(babyDocRef, updatedData);
 
-      // Atualiza a lista local e reordena
       const updatedList = babyList.map(b =>
         b.id === editingBaby.id ? { ...b, ...updatedData } : b
       ).sort((a, b) => new Date(a.dataNascimento) - new Date(b.dataNascimento));
@@ -393,14 +376,13 @@ export default function ProfileMotherScreen({ navigation, route }) {
     }
   }
   
-  // Função para remover o bebê (agora usa o Custom Alert)
   function confirmRemoveBaby() {
-    showEditModal(false); // Fecha o modal de edição antes de mostrar a confirmação
+    setShowEditModal(false); 
     showCustomAlert(
       "Confirmar Remoção ⚠️",
       `Tem certeza que deseja remover o bebê ${editingBaby.nome}? Essa ação é irreversível e apagará todos os dados de registro relacionados.`,
-      removeBabyAction, // Ação de confirmação
-      () => { setShowEditModal(true); }, // Ação de cancelamento (volta para o modal de edição)
+      removeBabyAction,
+      () => { setShowEditModal(true); },
       "Remover",
       "Cancelar"
     );
@@ -415,7 +397,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
       await deleteDoc(doc(db, "bebes", editingBaby.id));
 
-      // Atualiza a lista local
       const updatedList = babyList.filter(b => b.id !== editingBaby.id)
                                   .sort((a, b) => new Date(a.dataNascimento) - new Date(b.dataNascimento));
       
@@ -434,7 +415,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
     }
   }
 
-  // Função para garantir que o peso tenha no máximo dois dígitos (antes ou depois da vírgula)
   function formatWeightInput(text) {
     let cleanText = text.replace(/[^0-9.,]/g, "");
     cleanText = cleanText.replace(",", ".");
@@ -543,14 +523,13 @@ export default function ProfileMotherScreen({ navigation, route }) {
           </View>
         ))}
 
-        {/* Botão para adicionar bebê com espaçamento ajustado */}
         <TouchableOpacity
           style={[styles.addBabyButton, {
             backgroundColor: "#fff",
             borderWidth: 1,
             borderColor: "#C31E65",
             marginTop: 5, 
-            marginBottom: 10, // Diminuído para subir mais
+            marginBottom: 10, 
             marginHorizontal: 20, 
           }]}
           onPress={() => setShowModal(true)}
@@ -597,7 +576,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
       <BottomNav navigation={navigation} activeScreen="ProfileMother" user={user} />
 
-      {/* MODAL PARA ADICIONAR NOVO BEBÊ */}
       <Modal isVisible={showModal}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Adicionar bebê</Text>
@@ -652,7 +630,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
         </View>
       </Modal>
 
-      {/* MODAL PARA EDITAR BEBÊ EXISTENTE */}
       <Modal isVisible={showEditModal}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Editar bebê</Text>
@@ -696,7 +673,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
             style={styles.modalInput}
           />
             
-          {/* Botões ajustados: Remover à esquerda, Cancelar/Salvar à direita */}
           <View style={styles.modalButtonsRow}>
             <TouchableOpacity onPress={confirmRemoveBaby}>
               <Text style={styles.modalRemoveText}>Remover Bebê</Text>
@@ -713,7 +689,6 @@ export default function ProfileMotherScreen({ navigation, route }) {
         </View>
       </Modal>
 
-      {/* CUSTOM SUCCESS/CONFIRMATION MODAL */}
       <CustomAlertModal
         isVisible={alertVisible}
         title={alertTitle}
@@ -831,7 +806,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionText: { marginLeft: 10, fontSize: 14, color: "#333" },
-  modalContainer: { // Estilo para Modais de Adicionar/Editar
+  modalContainer: {
     backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
@@ -853,7 +828,7 @@ const styles = StyleSheet.create({
   },
   modalButtonsRow: {
     flexDirection: "row",
-    justifyContent: "space-between", // Manteve o space-between para separar o Remover dos outros
+    justifyContent: "space-between", 
     marginTop: 15,
   },
   modalCancelText: {
@@ -865,7 +840,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
   },
-  // Novo estilo para o texto de remoção (agora um texto alinhado à esquerda)
+  
   modalRemoveText: {
     color: '#C31E65',
     fontSize: 14,
