@@ -144,6 +144,16 @@ export default function HomeMother({ navigation, route }) {
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
             <Text style={styles.statLabel}>Sorrisos hoje</Text>
             <Text style={[styles.statValue, { color: "#07A29C" }]}>{sorrisosHoje}</Text>
+
+            {/* Botão de decrementar */}
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: "#065853", left: 12, right: 'auto' }]}
+              onPress={() => setSorrisosHoje(prev => (prev > 0 ? prev - 1 : 0))}
+            >
+              <Text style={styles.addButtonText}>-</Text>
+            </TouchableOpacity>
+
+            {/* Botão de incrementar */}
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#07A29C" }]}
               onPress={() => setSorrisosHoje(sorrisosHoje + 1)}
@@ -158,6 +168,25 @@ export default function HomeMother({ navigation, route }) {
             <Text style={[styles.statValue, { color: "#00B61C" }]}>
               {tempoSono.horas}h {tempoSono.minutos}m
             </Text>
+
+            {/* Botão de decrementar */}
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: "#016d0a", left: 12, right: 'auto' }]}
+              onPress={() => {
+                let { horas, minutos } = tempoSono;
+                if (horas === 0 && minutos === 0) return; // não pode decrementar abaixo de 0
+                minutos -= 15;
+                if (minutos < 0) {
+                  horas -= 1;
+                  minutos = 45;
+                }
+                setTempoSono({ horas, minutos });
+              }}
+            >
+              <Text style={styles.addButtonText}>-</Text>
+            </TouchableOpacity>
+
+            {/* Botão de incrementar */}
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#00B61C" }]}
               onPress={incrementarTempoSono}
@@ -395,3 +424,5 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
+
