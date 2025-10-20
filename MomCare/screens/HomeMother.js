@@ -1,13 +1,56 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons, MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient"; 
 import BottomNav from "../components/BottomNavMother";
 import babyImage from "../assets/baby.png";
 
+// Firebase imports
+import { getFirestore, collection, query, where, onSnapshot } from "firebase/firestore";
+import { app } from "../firebaseConfig"; // ajuste o caminho conforme sua configuração firebase
+
 export default function HomeMother({ navigation, route }) {
-  
   const user = route?.params?.user || null;
+  const [bebes, setBebes] = useState([]);
+
+  const db = getFirestore(app);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Busca os bebês da mãe (user.id), ordenando do mais velho para o mais novo
+    const q = query(
+      collection(db, "bebes"),
+      where("userId", "==", user.id),
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const listaBebes = [];
+      querySnapshot.forEach((doc) => {
+        listaBebes.push({ id: doc.id, ...doc.data() });
+      });
+      setBebes(listaBebes);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Função que calcula a idade do bebê (meses e dias)
+  function calcularIdade(dataNascimento) {
+    // Suporte para timestamp Firestore ou string
+    const nascimento = dataNascimento.toDate ? dataNascimento.toDate() : new Date(dataNascimento);
+    const agora = new Date();
+
+    let meses = (agora.getFullYear() - nascimento.getFullYear()) * 12 + (agora.getMonth() - nascimento.getMonth());
+    let dias = agora.getDate() - nascimento.getDate();
+
+    if (dias < 0) {
+      meses -= 1;
+      dias += new Date(agora.getFullYear(), agora.getMonth(), 0).getDate(); // dias do mês anterior
+    }
+
+    return `${meses}m ${dias}d`;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -15,6 +58,7 @@ export default function HomeMother({ navigation, route }) {
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
         style={styles.container}
       >
+        {/* Cabeçalho */}
         <View style={styles.header}>
           <LinearGradient
             colors={["#C6266C", "#DA5B92"]}
@@ -25,7 +69,6 @@ export default function HomeMother({ navigation, route }) {
             <Ionicons name="heart-outline" size={28} color="#fff" />
           </LinearGradient>
           <View style={{ marginLeft: 12, flex: 1 }}>
-            
             <Text style={styles.greeting}>
               Boa tarde{user?.name ? `, ${user.name}!` : "!"}
             </Text>
@@ -36,19 +79,51 @@ export default function HomeMother({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.babyCard}>
-          <Image source={babyImage} style={styles.babyImage} />
-          <View style={{ marginLeft: 12, flex: 1 }}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={styles.babyName}>Sofia</Text>
-              <View style={styles.ageBadge}>
-                <Text style={styles.babyAge}>3m 12d</Text>
-              </View>
-            </View>
-            <Text style={styles.babyStatus}>Crescendo forte e saudável!</Text>
-          </View>
-        </View>
+        {/* Cards dos bebês - Scroll horizontal para vários */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 25 }}
+          contentContainerStyle={{ alignItems: 'center', paddingLeft: 12, paddingRight: 15,}}
+          snapToInterval={345} // 320 (largura do card) + 25 (marginRight)
+          decelerationRate="fast"
+          snapToAlignment="start"
+        >
+          {bebes.length > 0 ? (
+            bebes.map((bebe, index) => {
+              const primeiroNome = bebe.nome.split(" ")[0]; // pega só o primeiro nome
+              return (
+                <View
+                  key={bebe.id}
+                  style={[
+                    styles.babyCard,
+                    {
+                      width: 320,
+                      marginRight: index === bebes.length - 1 ? 0 : 20, // último card sem marginRight
+                    },
+                  ]}
+                >
+                  <Image source={babyImage} style={styles.babyImage} />
+                  <View style={{ marginLeft: 12, flex: 1 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <Text style={styles.babyName}>{primeiroNome}</Text>
+                      <View style={styles.ageBadge}>
+                        <Text style={styles.babyAge}>{calcularIdade(bebe.dataNascimento)}</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.babyStatus}>Crescendo forte e saudável!</Text>
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <Text style={{ marginLeft: 20, fontSize: 14, color: "#888" }}>
+              Nenhum bebê cadastrado.
+            </Text>
+          )}
+        </ScrollView>
 
+        {/* Estatísticas */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
@@ -73,6 +148,7 @@ export default function HomeMother({ navigation, route }) {
           </View>
         </View>
 
+        {/* Dica do dia */}
         <View style={styles.tipCard}>
           <View style={styles.tipHeader}>
             <Ionicons name="star-outline" size={18} color="#C31E65" />
@@ -83,6 +159,7 @@ export default function HomeMother({ navigation, route }) {
           </Text>
         </View>
 
+        {/* Próximas atividades */}
         <View style={styles.activitiesCard}>
           <View style={styles.activitiesHeader}>
             <Ionicons name="calendar-outline" size={18} color="#C31E65" />
@@ -111,6 +188,7 @@ export default function HomeMother({ navigation, route }) {
         </View>
       </ScrollView>
 
+      {/* Navegação inferior */}
       <BottomNav navigation={navigation} activeScreen="HomeMother" user={user} />
     </View>
   );
@@ -153,10 +231,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFECF7",
     borderRadius: 14,
     padding: 20,
-    marginBottom: 25,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#F7E2EB",  
+    borderColor: "#F7E2EB",
   },
   babyImage: {
     width: 64,
@@ -299,4 +376,5 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
 
