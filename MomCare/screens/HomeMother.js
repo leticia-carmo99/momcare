@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from "react-native";
 import { Ionicons, MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient"; 
 import BottomNav from "../components/BottomNavMother";
@@ -71,6 +71,54 @@ export default function HomeMother({ navigation, route }) {
       minutos -= 60;
     }
     setTempoSono({ horas, minutos });
+  }
+
+  function atualizarSorrisos() {
+    Alert.prompt(
+      "Quantos sorrisos hoje?",
+      "Digite o número de sorrisos",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "OK",
+          onPress: (input) => {
+            const value = parseInt(input);
+            if (!isNaN(value) && value >= 0) setSorrisosHoje(value);
+          }
+        }
+      ],
+      "plain-text",
+      sorrisosHoje.toString()
+    );
+  }
+
+  function atualizarTempoSono() {
+    Alert.prompt(
+      "Tempo de sono",
+      "Digite o tempo de sono (ex: 7.5 para 7h30m)",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "OK",
+          onPress: (input) => {
+            const floatVal = parseFloat(input);
+            if (!isNaN(floatVal) && floatVal >= 0) {
+              const horas = Math.floor(floatVal);
+              const minutos = Math.round((floatVal - horas) * 60);
+              setTempoSono({ horas, minutos });
+            }
+          }
+        }
+      ],
+      "plain-text",
+      `${tempoSono.horas + tempoSono.minutos / 60}`
+    );
   }
 
   return (
@@ -148,13 +196,7 @@ export default function HomeMother({ navigation, route }) {
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
             <Text style={styles.statLabel}>Sorrisos hoje</Text>
 
-            <TouchableOpacity
-              onPress={() => {
-                const input = prompt("Quantos sorrisos hoje?");
-                const value = parseInt(input);
-                if (!isNaN(value) && value >= 0) setSorrisosHoje(value);
-              }}
-            >
+            <TouchableOpacity onPress={atualizarSorrisos}>
               <Text style={[styles.statValue, { color: "#07A29C" }]}>{sorrisosHoje}</Text>
             </TouchableOpacity>
 
@@ -177,20 +219,8 @@ export default function HomeMother({ navigation, route }) {
             <MaterialCommunityIcons name="sleep" size={28} color="#00B61C" />
             <Text style={styles.statLabel}>Tempo de sono</Text>
 
-            <TouchableOpacity
-              onPress={() => {
-                const input = prompt("Tempo de sono (ex: 7.5 para 7h30)");
-                const floatVal = parseFloat(input);
-                if (!isNaN(floatVal) && floatVal >= 0) {
-                  const horas = Math.floor(floatVal);
-                  const minutos = Math.round((floatVal - horas) * 60);
-                  setTempoSono({ horas, minutos });
-                }
-              }}
-            >
-              <Text style={[styles.statValue, { color: "#00B61C" }]}>
-                {tempoSono.horas}h {tempoSono.minutos}m
-              </Text>
+            <TouchableOpacity onPress={atualizarTempoSono}>
+              <Text style={[styles.statValue, { color: "#00B61C" }]}>{tempoSono.horas}h {tempoSono.minutos}m</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
