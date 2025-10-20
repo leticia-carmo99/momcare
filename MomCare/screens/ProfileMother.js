@@ -28,7 +28,12 @@ import Modal from "react-native-modal";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 const CustomAlertModal = ({ isVisible, title, message, onConfirm, onCancel, confirmText = "OK", cancelText }) => (
-  <Modal isVisible={isVisible} backdropTransitionOutTiming={0}>
+  <Modal 
+    isVisible={isVisible}
+    backdropOpacity={0} 
+    animationIn="fadeIn"
+    animationOut="fadeOut"
+  >
     <View style={customStyles.modalOverlay}>
       <View style={customStyles.modalContainer}>
         {onCancel && (
@@ -240,7 +245,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
       const userDocRef = doc(db, "maes", user.id);
       await updateDoc(userDocRef, { name: name.trim() });
 
-      showCustomAlert("Sucesso 🎉", "Seu nome foi atualizado com sucesso!", () => {});
+      showCustomAlert("Sucesso!", "Seu nome foi atualizado com sucesso!", () => {});
       setIsEditing(false);
       user.name = name.trim();
     } catch (error) {
@@ -322,7 +327,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
       setShowModal(false);
       setBabyName("");
       setBabyWeight("");
-      showCustomAlert("Sucesso! ✨", "Novo bebê adicionado com sucesso!", () => {});
+      showCustomAlert("Sucesso!", "Novo bebê adicionado com sucesso!", () => {});
     } catch (err) {
       console.error("Erro ao salvar bebê:", err);
       Alert.alert("Erro", "Não foi possível salvar. Tente novamente.");
@@ -364,7 +369,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
       
       setBabyList(updatedList);
 
-      showCustomAlert("Atualizado! 📝", "Informações do bebê atualizadas com sucesso!", () => {});
+      showCustomAlert("Atualizado!", "Informações do bebê atualizadas com sucesso!", () => {});
       setShowEditModal(false);
       setEditingBaby(null);
     } catch (error) {
@@ -379,7 +384,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
   function confirmRemoveBaby() {
     setShowEditModal(false); 
     showCustomAlert(
-      "Confirmar Remoção ⚠️",
+      "Confirmar Remoção",
       `Tem certeza que deseja remover o bebê ${editingBaby.nome}? Essa ação é irreversível e apagará todos os dados de registro relacionados.`,
       removeBabyAction,
       () => { setShowEditModal(true); },
@@ -403,7 +408,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
       setBabyList(updatedList);
       setIsFirstTimeMom(updatedList.length === 1);
 
-      showCustomAlert("Removido 👋", `O bebê ${editingBaby.nome} foi removido com sucesso!`, () => {});
+      showCustomAlert("Removido!", `O bebê ${editingBaby.nome} foi removido com sucesso!`, () => {});
       setShowEditModal(false);
       setEditingBaby(null);
     } catch (error) {
