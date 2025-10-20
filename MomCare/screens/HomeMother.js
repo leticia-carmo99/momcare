@@ -13,6 +13,10 @@ export default function HomeMother({ navigation, route }) {
   const user = route?.params?.user || null;
   const [bebes, setBebes] = useState([]);
 
+  // Novos estados para sorrisos e tempo de sono
+  const [sorrisosHoje, setSorrisosHoje] = useState(12);
+  const [tempoSono, setTempoSono] = useState({ horas: 7, minutos: 30 });
+
   const db = getFirestore(app);
 
   useEffect(() => {
@@ -50,6 +54,17 @@ export default function HomeMother({ navigation, route }) {
     }
 
     return `${meses}m ${dias}d`;
+  }
+
+  // Função para incrementar o tempo de sono em 15 minutos
+  function incrementarTempoSono() {
+    let { horas, minutos } = tempoSono;
+    minutos += 15;
+    if (minutos >= 60) {
+      horas += 1;
+      minutos -= 60;
+    }
+    setTempoSono({ horas, minutos });
   }
 
   return (
@@ -128,9 +143,10 @@ export default function HomeMother({ navigation, route }) {
           <View style={styles.statCard}>
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
             <Text style={styles.statLabel}>Sorrisos hoje</Text>
-            <Text style={[styles.statValue, { color: "#07A29C" }]}>12</Text>
+            <Text style={[styles.statValue, { color: "#07A29C" }]}>{sorrisosHoje}</Text>
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#07A29C" }]}
+              onPress={() => setSorrisosHoje(sorrisosHoje + 1)}
             >
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
@@ -139,9 +155,12 @@ export default function HomeMother({ navigation, route }) {
           <View style={styles.statCard}>
             <MaterialCommunityIcons name="sleep" size={28} color="#00B61C" />
             <Text style={styles.statLabel}>Tempo de sono</Text>
-            <Text style={[styles.statValue, { color: "#00B61C" }]}>7h 30m</Text>
+            <Text style={[styles.statValue, { color: "#00B61C" }]}>
+              {tempoSono.horas}h {tempoSono.minutos}m
+            </Text>
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#00B61C" }]}
+              onPress={incrementarTempoSono}
             >
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
@@ -376,5 +395,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-
-
