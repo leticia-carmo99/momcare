@@ -13,16 +13,29 @@ export default function HomeMother({ navigation, route }) {
   const user = route?.params?.user || null;
   const [bebes, setBebes] = useState([]);
 
-  // Novos estados para sorrisos e tempo de sono
-  const [sorrisosHoje, setSorrisosHoje] = useState(12);
-  const [tempoSono, setTempoSono] = useState({ horas: 7, minutos: 30 });
+  // Estados iniciando em 0
+  const [sorrisosHoje, setSorrisosHoje] = useState(0);
+  const [tempoSono, setTempoSono] = useState({ horas: 0, minutos: 0 });
 
   const db = getFirestore(app);
+
+  // Reset diário à meia-noite
+  useEffect(() => {
+    const now = new Date();
+    const millisTillMidnight =
+      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+
+    const resetTimer = setTimeout(() => {
+      setSorrisosHoje(0);
+      setTempoSono({ horas: 0, minutos: 0 });
+    }, millisTillMidnight);
+
+    return () => clearTimeout(resetTimer);
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
 
-    // Busca os bebês da mãe (user.id), ordenando do mais velho para o mais novo
     const q = query(
       collection(db, "bebes"),
       where("userId", "==", user.id),
@@ -39,9 +52,7 @@ export default function HomeMother({ navigation, route }) {
     return () => unsubscribe();
   }, [user]);
 
-  // Função que calcula a idade do bebê (meses e dias)
   function calcularIdade(dataNascimento) {
-    // Suporte para timestamp Firestore ou string
     const nascimento = dataNascimento.toDate ? dataNascimento.toDate() : new Date(dataNascimento);
     const agora = new Date();
 
@@ -50,13 +61,12 @@ export default function HomeMother({ navigation, route }) {
 
     if (dias < 0) {
       meses -= 1;
-      dias += new Date(agora.getFullYear(), agora.getMonth(), 0).getDate(); // dias do mês anterior
+      dias += new Date(agora.getFullYear(), agora.getMonth(), 0).getDate();
     }
 
     return `${meses}m ${dias}d`;
   }
 
-  // Função para incrementar o tempo de sono em 15 minutos
   function incrementarTempoSono() {
     let { horas, minutos } = tempoSono;
     minutos += 15;
@@ -94,19 +104,19 @@ export default function HomeMother({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* Cards dos bebês - Scroll horizontal para vários */}
+        {/* Cards dos bebês */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={{ marginBottom: 25 }}
-          contentContainerStyle={{ alignItems: 'center', paddingLeft: 12, paddingRight: 15,}}
-          snapToInterval={345} // 320 (largura do card) + 25 (marginRight)
+          contentContainerStyle={{ alignItems: 'center', paddingLeft: 12, paddingRight: 15 }}
+          snapToInterval={345}
           decelerationRate="fast"
           snapToAlignment="start"
         >
           {bebes.length > 0 ? (
             bebes.map((bebe, index) => {
-              const primeiroNome = bebe.nome.split(" ")[0]; // pega só o primeiro nome
+              const primeiroNome = bebe.nome.split(" ")[0];
               return (
                 <View
                   key={bebe.id}
@@ -114,7 +124,7 @@ export default function HomeMother({ navigation, route }) {
                     styles.babyCard,
                     {
                       width: 320,
-                      marginRight: index === bebes.length - 1 ? 0 : 20, // último card sem marginRight
+                      marginRight: index === bebes.length - 1 ? 0 : 20,
                     },
                   ]}
                 >
@@ -143,17 +153,26 @@ export default function HomeMother({ navigation, route }) {
           <View style={styles.statCard}>
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
             <Text style={styles.statLabel}>Sorrisos hoje</Text>
-            <Text style={[styles.statValue, { color: "#07A29C" }]}>{sorrisosHoje}</Text>
 
-            {/* Botão de decrementar */}
+            {/* Valor com clique manual */}
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: "#065853", left: 12, right: 'auto' }]}
+              onPress={() => {
+                const input = prompt("Quantos sorrisos hoje?");
+                const value = parseInt(input);
+                if (!isNaN(value) && value >= 0) setSorrisosHoje(value);
+              }}
+            >
+              <Text style={[styles.statValue, { color: "#07A29C" }]}>{sorrisosHoje}</Text>
+            </TouchableOpacity>
+
+            {/* Botões */}
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: "#07A29C", left: 12, right: 'auto' }]}
               onPress={() => setSorrisosHoje(prev => (prev > 0 ? prev - 1 : 0))}
             >
               <Text style={styles.addButtonText}>-</Text>
             </TouchableOpacity>
 
-            {/* Botão de incrementar */}
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#07A29C" }]}
               onPress={() => setSorrisosHoje(sorrisosHoje + 1)}
@@ -165,16 +184,30 @@ export default function HomeMother({ navigation, route }) {
           <View style={styles.statCard}>
             <MaterialCommunityIcons name="sleep" size={28} color="#00B61C" />
             <Text style={styles.statLabel}>Tempo de sono</Text>
-            <Text style={[styles.statValue, { color: "#00B61C" }]}>
-              {tempoSono.horas}h {tempoSono.minutos}m
-            </Text>
 
-            {/* Botão de decrementar */}
+            {/* Valor com clique manual */}
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: "#016d0a", left: 12, right: 'auto' }]}
+              onPress={() => {
+                const input = prompt("Tempo de sono (ex: 7.5 para 7h30)");
+                const floatVal = parseFloat(input);
+                if (!isNaN(floatVal) && floatVal >= 0) {
+                  const horas = Math.floor(floatVal);
+                  const minutos = Math.round((floatVal - horas) * 60);
+                  setTempoSono({ horas, minutos });
+                }
+              }}
+            >
+              <Text style={[styles.statValue, { color: "#00B61C" }]}>
+                {tempoSono.horas}h {tempoSono.minutos}m
+              </Text>
+            </TouchableOpacity>
+
+            {/* Botões */}
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: "#00B61C", left: 12, right: 'auto' }]}
               onPress={() => {
                 let { horas, minutos } = tempoSono;
-                if (horas === 0 && minutos === 0) return; // não pode decrementar abaixo de 0
+                if (horas === 0 && minutos === 0) return;
                 minutos -= 15;
                 if (minutos < 0) {
                   horas -= 1;
@@ -186,7 +219,6 @@ export default function HomeMother({ navigation, route }) {
               <Text style={styles.addButtonText}>-</Text>
             </TouchableOpacity>
 
-            {/* Botão de incrementar */}
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#00B61C" }]}
               onPress={incrementarTempoSono}
