@@ -4,22 +4,18 @@ import { Ionicons, MaterialCommunityIcons, FontAwesome } from "@expo/vector-icon
 import { LinearGradient } from "expo-linear-gradient"; 
 import BottomNav from "../components/BottomNavMother";
 import babyImage from "../assets/baby.png";
-
-// Firebase imports
 import { getFirestore, collection, query, where, onSnapshot } from "firebase/firestore";
-import { app } from "../firebaseConfig"; // ajuste o caminho conforme sua configuração firebase
+import { app } from "../firebaseConfig"; 
 
 export default function HomeMother({ navigation, route }) {
   const user = route?.params?.user || null;
   const [bebes, setBebes] = useState([]);
 
-  // Estados iniciando em 0
   const [sorrisosHoje, setSorrisosHoje] = useState(0);
   const [tempoSono, setTempoSono] = useState({ horas: 0, minutos: 0 });
 
   const db = getFirestore(app);
 
-  // Reset diário à meia-noite
   useEffect(() => {
     const now = new Date();
     const millisTillMidnight =
@@ -104,7 +100,6 @@ export default function HomeMother({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* Cards dos bebês */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -148,13 +143,11 @@ export default function HomeMother({ navigation, route }) {
           )}
         </ScrollView>
 
-        {/* Estatísticas */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
             <Text style={styles.statLabel}>Sorrisos hoje</Text>
 
-            {/* Valor com clique manual */}
             <TouchableOpacity
               onPress={() => {
                 const input = prompt("Quantos sorrisos hoje?");
@@ -165,7 +158,6 @@ export default function HomeMother({ navigation, route }) {
               <Text style={[styles.statValue, { color: "#07A29C" }]}>{sorrisosHoje}</Text>
             </TouchableOpacity>
 
-            {/* Botões */}
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#07A29C", left: 12, right: 'auto' }]}
               onPress={() => setSorrisosHoje(prev => (prev > 0 ? prev - 1 : 0))}
@@ -185,7 +177,6 @@ export default function HomeMother({ navigation, route }) {
             <MaterialCommunityIcons name="sleep" size={28} color="#00B61C" />
             <Text style={styles.statLabel}>Tempo de sono</Text>
 
-            {/* Valor com clique manual */}
             <TouchableOpacity
               onPress={() => {
                 const input = prompt("Tempo de sono (ex: 7.5 para 7h30)");
@@ -202,7 +193,6 @@ export default function HomeMother({ navigation, route }) {
               </Text>
             </TouchableOpacity>
 
-            {/* Botões */}
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#00B61C", left: 12, right: 'auto' }]}
               onPress={() => {
@@ -228,7 +218,6 @@ export default function HomeMother({ navigation, route }) {
           </View>
         </View>
 
-        {/* Dica do dia */}
         <View style={styles.tipCard}>
           <View style={styles.tipHeader}>
             <Ionicons name="star-outline" size={18} color="#C31E65" />
@@ -239,7 +228,6 @@ export default function HomeMother({ navigation, route }) {
           </Text>
         </View>
 
-        {/* Próximas atividades */}
         <View style={styles.activitiesCard}>
           <View style={styles.activitiesHeader}>
             <Ionicons name="calendar-outline" size={18} color="#C31E65" />
@@ -268,7 +256,6 @@ export default function HomeMother({ navigation, route }) {
         </View>
       </ScrollView>
 
-      {/* Navegação inferior */}
       <BottomNav navigation={navigation} activeScreen="HomeMother" user={user} />
     </View>
   );
