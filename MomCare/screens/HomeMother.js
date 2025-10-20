@@ -341,9 +341,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 28,
+    fontSize: 20,
     lineHeight: 30,
   },
   tipCard: {
@@ -424,5 +424,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-
-
