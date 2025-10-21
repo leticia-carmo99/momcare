@@ -1,25 +1,48 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from "react-native";
-import { Ionicons, MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient"; 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Modal,
+  TextInput,
+} from "react-native";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  FontAwesome,
+} from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNavMother";
 import babyImage from "../assets/baby.png";
-import { getFirestore, collection, query, where, onSnapshot } from "firebase/firestore";
-import { app } from "../firebaseConfig"; 
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  onSnapshot,
+} from "firebase/firestore";
+import { app } from "../firebaseConfig";
 
 export default function HomeMother({ navigation, route }) {
   const user = route?.params?.user || null;
   const [bebes, setBebes] = useState([]);
-
   const [sorrisosHoje, setSorrisosHoje] = useState(0);
   const [tempoSono, setTempoSono] = useState({ horas: 0, minutos: 0 });
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [tipoModal, setTipoModal] = useState(null); // 'sorrisos' ou 'sono'
+  const [inputModal, setInputModal] = useState("");
 
   const db = getFirestore(app);
 
   useEffect(() => {
     const now = new Date();
     const millisTillMidnight =
-      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) -
+      now;
 
     const resetTimer = setTimeout(() => {
       setSorrisosHoje(0);
@@ -32,10 +55,7 @@ export default function HomeMother({ navigation, route }) {
   useEffect(() => {
     if (!user?.id) return;
 
-    const q = query(
-      collection(db, "bebes"),
-      where("userId", "==", user.id),
-    );
+    const q = query(collection(db, "bebes"), where("userId", "==", user.id));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const listaBebes = [];
@@ -49,10 +69,14 @@ export default function HomeMother({ navigation, route }) {
   }, [user]);
 
   function calcularIdade(dataNascimento) {
-    const nascimento = dataNascimento.toDate ? dataNascimento.toDate() : new Date(dataNascimento);
+    const nascimento = dataNascimento.toDate
+      ? dataNascimento.toDate()
+      : new Date(dataNascimento);
     const agora = new Date();
 
-    let meses = (agora.getFullYear() - nascimento.getFullYear()) * 12 + (agora.getMonth() - nascimento.getMonth());
+    let meses =
+      (agora.getFullYear() - nascimento.getFullYear()) * 12 +
+      (agora.getMonth() - nascimento.getMonth());
     let dias = agora.getDate() - nascimento.getDate();
 
     if (dias < 0) {
@@ -73,52 +97,32 @@ export default function HomeMother({ navigation, route }) {
     setTempoSono({ horas, minutos });
   }
 
-  function atualizarSorrisos() {
-    Alert.prompt(
-      "Quantos sorrisos hoje?",
-      "Digite o número de sorrisos",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel"
-        },
-        {
-          text: "OK",
-          onPress: (input) => {
-            const value = parseInt(input);
-            if (!isNaN(value) && value >= 0) setSorrisosHoje(value);
-          }
-        }
-      ],
-      "plain-text",
-      sorrisosHoje.toString()
-    );
+  function abrirModal(tipo) {
+    setTipoModal(tipo);
+    if (tipo === "sorrisos") {
+      setInputModal(sorrisosHoje.toString());
+    } else if (tipo === "sono") {
+      const valorFloat = tempoSono.horas + tempoSono.minutos / 60;
+      setInputModal(valorFloat.toFixed(2));
+    }
+    setModalVisible(true);
   }
 
-  function atualizarTempoSono() {
-    Alert.prompt(
-      "Tempo de sono",
-      "Digite o tempo de sono (ex: 7.5 para 7h30m)",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel"
-        },
-        {
-          text: "OK",
-          onPress: (input) => {
-            const floatVal = parseFloat(input);
-            if (!isNaN(floatVal) && floatVal >= 0) {
-              const horas = Math.floor(floatVal);
-              const minutos = Math.round((floatVal - horas) * 60);
-              setTempoSono({ horas, minutos });
-            }
-          }
-        }
-      ],
-      "plain-text",
-      `${tempoSono.horas + tempoSono.minutos / 60}`
-    );
+  function confirmarModal() {
+    if (tipoModal === "sorrisos") {
+      const valor = parseInt(inputModal);
+      if (!isNaN(valor) && valor >= 0) {
+        setSorrisosHoje(valor);
+      }
+    } else if (tipoModal === "sono") {
+      const valor = parseFloat(inputModal);
+      if (!isNaN(valor) && valor >= 0) {
+        const horas = Math.floor(valor);
+        const minutos = Math.round((valor - horas) * 60);
+        setTempoSono({ horas, minutos });
+      }
+    }
+    setModalVisible(false);
   }
 
   return (
@@ -127,7 +131,6 @@ export default function HomeMother({ navigation, route }) {
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
         style={styles.container}
       >
-        {/* Cabeçalho */}
         <View style={styles.header}>
           <LinearGradient
             colors={["#C6266C", "#DA5B92"]}
@@ -143,7 +146,10 @@ export default function HomeMother({ navigation, route }) {
             </Text>
             <Text style={styles.question}>Como você está hoje?</Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.openDrawer?.()} style={styles.menuButton}>
+          <TouchableOpacity
+            onPress={() => navigation.openDrawer?.()}
+            style={styles.menuButton}
+          >
             <Ionicons name="menu" size={28} color="#C31E65" />
           </TouchableOpacity>
         </View>
@@ -152,7 +158,7 @@ export default function HomeMother({ navigation, route }) {
           horizontal
           showsHorizontalScrollIndicator={false}
           style={{ marginBottom: 25 }}
-          contentContainerStyle={{ alignItems: 'center', paddingLeft: 12, paddingRight: 15 }}
+          contentContainerStyle={{ alignItems: "center", paddingLeft: 12, paddingRight: 15 }}
           snapToInterval={345}
           decelerationRate="fast"
           snapToAlignment="start"
@@ -176,10 +182,14 @@ export default function HomeMother({ navigation, route }) {
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
                       <Text style={styles.babyName}>{primeiroNome}</Text>
                       <View style={styles.ageBadge}>
-                        <Text style={styles.babyAge}>{calcularIdade(bebe.dataNascimento)}</Text>
+                        <Text style={styles.babyAge}>
+                          {calcularIdade(bebe.dataNascimento)}
+                        </Text>
                       </View>
                     </View>
-                    <Text style={styles.babyStatus}>Crescendo forte e saudável!</Text>
+                    <Text style={styles.babyStatus}>
+                      Crescendo forte e saudável!
+                    </Text>
                   </View>
                 </View>
               );
@@ -196,12 +206,14 @@ export default function HomeMother({ navigation, route }) {
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
             <Text style={styles.statLabel}>Sorrisos hoje</Text>
 
-            <TouchableOpacity onPress={atualizarSorrisos}>
-              <Text style={[styles.statValue, { color: "#07A29C" }]}>{sorrisosHoje}</Text>
+            <TouchableOpacity onPress={() => abrirModal("sorrisos")}>
+              <Text style={[styles.statValue, { color: "#07A29C" }]}>
+                {sorrisosHoje}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: "#07A29C", left: 12, right: 'auto' }]}
+              style={[styles.addButton, { backgroundColor: "#07A29C", left: 12, right: "auto" }]}
               onPress={() => setSorrisosHoje(prev => (prev > 0 ? prev - 1 : 0))}
             >
               <Text style={styles.addButtonText}>-</Text>
@@ -219,12 +231,14 @@ export default function HomeMother({ navigation, route }) {
             <MaterialCommunityIcons name="sleep" size={28} color="#00B61C" />
             <Text style={styles.statLabel}>Tempo de sono</Text>
 
-            <TouchableOpacity onPress={atualizarTempoSono}>
-              <Text style={[styles.statValue, { color: "#00B61C" }]}>{tempoSono.horas}h {tempoSono.minutos}m</Text>
+            <TouchableOpacity onPress={() => abrirModal("sono")}>
+              <Text style={[styles.statValue, { color: "#00B61C" }]}>
+                {tempoSono.horas}h {tempoSono.minutos}m
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: "#00B61C", left: 12, right: 'auto' }]}
+              style={[styles.addButton, { backgroundColor: "#00B61C", left: 12, right: "auto" }]}
               onPress={() => {
                 let { horas, minutos } = tempoSono;
                 if (horas === 0 && minutos === 0) return;
@@ -273,11 +287,7 @@ export default function HomeMother({ navigation, route }) {
           </View>
 
           <View style={styles.activityItem}>
-            <MaterialCommunityIcons
-              name="bathtub-outline"
-              size={22}
-              color="#C31E65"
-            />
+            <MaterialCommunityIcons name="bathtub-outline" size={22} color="#C31E65" />
             <View style={styles.activityTextContainer}>
               <Text style={styles.activityText}>Banho</Text>
               <Text style={styles.activitySubText}>Hoje às 16h</Text>
@@ -285,6 +295,33 @@ export default function HomeMother({ navigation, route }) {
           </View>
         </View>
       </ScrollView>
+
+      {/* MODAL DE ENTRADA */}
+      <Modal transparent={true} animationType="fade" visible={modalVisible}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>
+              {tipoModal === "sorrisos" ? "Digite os sorrisos de hoje" : "Digite o tempo de sono (ex: 7.5 para 7h30m)"}
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              keyboardType="numeric"
+              value={inputModal}
+              onChangeText={setInputModal}
+              placeholder="Digite aqui"
+              placeholderTextColor="#aaa"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={[styles.modalButton, { backgroundColor: "#ccc" }]}>
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={confirmarModal} style={[styles.modalButton, { backgroundColor: "#C31E65" }]}>
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <BottomNav navigation={navigation} activeScreen="HomeMother" user={user} />
     </View>
@@ -304,7 +341,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   heartIconContainer: {
-    borderRadius: 25, 
+    borderRadius: 25,
     width: 50,
     height: 50,
     justifyContent: "center",
@@ -411,7 +448,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 25,
     borderWidth: 2,
-    borderColor: "#F7E2EB",  
+    borderColor: "#F7E2EB",
   },
   tipHeader: {
     flexDirection: "row",
@@ -422,7 +459,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     color: "#C31E65",
-    marginLeft: 8, 
+    marginLeft: 8,
   },
   tipText: {
     fontSize: 14,
@@ -437,11 +474,11 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     borderWidth: 2,
     borderColor: "#DDDDDD",
-    shadowColor: "#000",  
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
-    elevation: 4,  
+    elevation: 4,
   },
   activitiesHeader: {
     flexDirection: "row",
@@ -452,7 +489,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     color: "#555",
-    marginLeft: 8, 
+    marginLeft: 8,
   },
   activityItem: {
     flexDirection: "row",
@@ -472,4 +509,49 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 2,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#C31E65",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#C31E65",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    color: "#000",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
 });
+
