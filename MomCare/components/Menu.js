@@ -10,7 +10,7 @@ export default function Menu({ navigation, user }) {
         <Image source={fotoperfil} style={styles.avatar} />
         <View>
           <Text style={styles.name}>{user?.name || "Usuário"}</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("ProfileMother")}>
+          <TouchableOpacity onPress={() => navigation.navigate("ProfileMother", { user })}>
             <Text style={styles.viewProfile}>Ver perfil</Text>
           </TouchableOpacity>
         </View>
