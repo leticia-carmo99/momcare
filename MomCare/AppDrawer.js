@@ -10,7 +10,7 @@ export default function AppDrawer({ route }) {
 
   return (
     <Drawer.Navigator
-      drawerContent={(props) => <Menu {...props} />}
+      drawerContent={(props) => <Menu {...props} user={user} />}
       screenOptions={{ headerShown: false }}
     >
       <Drawer.Screen

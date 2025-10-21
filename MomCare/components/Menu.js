@@ -3,40 +3,40 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import fotoperfil from "../assets/fotoperfil.png"; 
 
-export default function Menu(props) {
+export default function Menu({ navigation, user }) {
   return (
     <View style={styles.container}>
       <View style={styles.profileSection}>
         <Image source={fotoperfil} style={styles.avatar} />
         <View>
-          <Text style={styles.name}>Verônica de Oliveira</Text>
-          <TouchableOpacity onPress={() => props.navigation.navigate("ProfileMother")}>
+          <Text style={styles.name}>{user?.name || "Usuário"}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("ProfileMother")}>
             <Text style={styles.viewProfile}>Ver perfil</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate("PublishedArticles")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("PublishedArticles")}>
         <Ionicons name="document-text-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Artigos</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate("Favoritos")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Favoritos")}>
         <Ionicons name="heart-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Favoritos</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate("Exames")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Exames")}>
         <Ionicons name="medkit-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Leitura de Exames</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate("Sobre")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Sobre")}>
         <MaterialCommunityIcons name="information-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Sobre o app</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate("Configuracoes")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Configuracoes")}>
         <Ionicons name="settings-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Configurações</Text>
       </TouchableOpacity>
@@ -81,3 +81,4 @@ const styles = StyleSheet.create({
     color: "#555",
   },
 });
+
