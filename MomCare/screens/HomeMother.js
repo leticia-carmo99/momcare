@@ -97,7 +97,7 @@ export default function HomeMother({ navigation, route }) {
 
     const resetTimer = setTimeout(() => {
       if (user?.id) {
-        const usuarioDoc = doc(db, "usuarios", user.id);
+        const usuarioDoc = doc(db, "maes", user.id);
         const hoje = new Date();
         setSorrisosHoje(0);
         setTempoSono({ horas: 0, minutos: 0 });
@@ -156,7 +156,7 @@ export default function HomeMother({ navigation, route }) {
       horas += 1;
       minutos -= 60;
     }
-    const usuarioDoc = user?.id ? doc(db, "usuarios", user.id) : null;
+    const usuarioDoc = user?.id ? doc(db, "maes", user.id) : null;
     setTempoSono({ horas, minutos });
     if (usuarioDoc) {
       setDoc(usuarioDoc, {
@@ -184,7 +184,7 @@ export default function HomeMother({ navigation, route }) {
       if (!isNaN(valor) && valor >= 0) {
         setSorrisosHoje(valor);
         if (user?.id) {
-          const usuarioDoc = doc(db, "usuarios", user.id);
+          const usuarioDoc = doc(db, "maes", user.id);
           setDoc(usuarioDoc, {
             sorrisosHoje: valor,
             ultimaAtualizacao: new Date(),
@@ -197,7 +197,7 @@ export default function HomeMother({ navigation, route }) {
       if (!isNaN(horas) && horas >= 0 && !isNaN(minutos) && minutos >= 0 && minutos < 60) {
         setTempoSono({ horas, minutos });
         if (user?.id) {
-          const usuarioDoc = doc(db, "usuarios", user.id);
+          const usuarioDoc = doc(db, "maes", user.id);
           setDoc(usuarioDoc, {
             tempoSonoHoras: horas,
             tempoSonoMinutos: minutos,
