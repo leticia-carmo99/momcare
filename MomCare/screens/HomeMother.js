@@ -23,6 +23,9 @@ import {
   query,
   where,
   onSnapshot,
+  doc,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { app } from "../firebaseConfig";
 
@@ -34,24 +37,83 @@ export default function HomeMother({ navigation, route }) {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [tipoModal, setTipoModal] = useState(null); // 'sorrisos' ou 'sono'
+  const [inputHoras, setInputHoras] = useState("");
+  const [inputMinutos, setInputMinutos] = useState("");
   const [inputModal, setInputModal] = useState("");
 
   const db = getFirestore(app);
 
+  // Lê os dados salvos quando o usuário entra
+  useEffect(() => {
+    if (!user?.id) return;
+    const usuarioDoc = doc(db, "maes", user.id);
+    getDoc(usuarioDoc).then((docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const ultimaAtualizacao = data.ultimaAtualizacao?.toDate
+          ? data.ultimaAtualizacao.toDate()
+          : data.ultimaAtualizacao;
+        const hoje = new Date();
+        if (
+          ultimaAtualizacao &&
+          ultimaAtualizacao.getDate() === hoje.getDate() &&
+          ultimaAtualizacao.getMonth() === hoje.getMonth() &&
+          ultimaAtualizacao.getFullYear() === hoje.getFullYear()
+        ) {
+          setSorrisosHoje(data.sorrisosHoje || 0);
+          setTempoSono({
+            horas: data.tempoSonoHoras || 0,
+            minutos: data.tempoSonoMinutos || 0,
+          });
+        } else {
+          // outro dia, resetar
+          setSorrisosHoje(0);
+          setTempoSono({ horas: 0, minutos: 0 });
+          setDoc(usuarioDoc, {
+            sorrisosHoje: 0,
+            tempoSonoHoras: 0,
+            tempoSonoMinutos: 0,
+            ultimaAtualizacao: hoje,
+          }, { merge: true });
+        }
+      } else {
+        // não existe ainda, criar
+        const hoje = new Date();
+        setDoc(usuarioDoc, {
+          sorrisosHoje: 0,
+          tempoSonoHoras: 0,
+          tempoSonoMinutos: 0,
+          ultimaAtualizacao: hoje,
+        });
+      }
+    });
+  }, [user]);
+
+  // Reset diário
   useEffect(() => {
     const now = new Date();
     const millisTillMidnight =
-      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) -
-      now;
+      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
 
     const resetTimer = setTimeout(() => {
-      setSorrisosHoje(0);
-      setTempoSono({ horas: 0, minutos: 0 });
+      if (user?.id) {
+        const usuarioDoc = doc(db, "usuarios", user.id);
+        const hoje = new Date();
+        setSorrisosHoje(0);
+        setTempoSono({ horas: 0, minutos: 0 });
+        setDoc(usuarioDoc, {
+          sorrisosHoje: 0,
+          tempoSonoHoras: 0,
+          tempoSonoMinutos: 0,
+          ultimaAtualizacao: hoje,
+        }, { merge: true });
+      }
     }, millisTillMidnight);
 
     return () => clearTimeout(resetTimer);
-  }, []);
+  }, [user]);
 
+  // Carrega lista de bebês
   useEffect(() => {
     if (!user?.id) return;
 
@@ -94,7 +156,15 @@ export default function HomeMother({ navigation, route }) {
       horas += 1;
       minutos -= 60;
     }
+    const usuarioDoc = user?.id ? doc(db, "usuarios", user.id) : null;
     setTempoSono({ horas, minutos });
+    if (usuarioDoc) {
+      setDoc(usuarioDoc, {
+        tempoSonoHoras: horas,
+        tempoSonoMinutos: minutos,
+        ultimaAtualizacao: new Date(),
+      }, { merge: true });
+    }
   }
 
   function abrirModal(tipo) {
@@ -102,8 +172,8 @@ export default function HomeMother({ navigation, route }) {
     if (tipo === "sorrisos") {
       setInputModal(sorrisosHoje.toString());
     } else if (tipo === "sono") {
-      const valorFloat = tempoSono.horas + tempoSono.minutos / 60;
-      setInputModal(valorFloat.toFixed(2));
+      setInputHoras(tempoSono.horas.toString());
+      setInputMinutos(tempoSono.minutos.toString());
     }
     setModalVisible(true);
   }
@@ -113,13 +183,27 @@ export default function HomeMother({ navigation, route }) {
       const valor = parseInt(inputModal);
       if (!isNaN(valor) && valor >= 0) {
         setSorrisosHoje(valor);
+        if (user?.id) {
+          const usuarioDoc = doc(db, "usuarios", user.id);
+          setDoc(usuarioDoc, {
+            sorrisosHoje: valor,
+            ultimaAtualizacao: new Date(),
+          }, { merge: true });
+        }
       }
     } else if (tipoModal === "sono") {
-      const valor = parseFloat(inputModal);
-      if (!isNaN(valor) && valor >= 0) {
-        const horas = Math.floor(valor);
-        const minutos = Math.round((valor - horas) * 60);
+      const horas = parseInt(inputHoras);
+      const minutos = parseInt(inputMinutos);
+      if (!isNaN(horas) && horas >= 0 && !isNaN(minutos) && minutos >= 0 && minutos < 60) {
         setTempoSono({ horas, minutos });
+        if (user?.id) {
+          const usuarioDoc = doc(db, "usuarios", user.id);
+          setDoc(usuarioDoc, {
+            tempoSonoHoras: horas,
+            tempoSonoMinutos: minutos,
+            ultimaAtualizacao: new Date(),
+          }, { merge: true });
+        }
       }
     }
     setModalVisible(false);
@@ -190,6 +274,9 @@ export default function HomeMother({ navigation, route }) {
                     <Text style={styles.babyStatus}>
                       Crescendo forte e saudável!
                     </Text>
+                    { index === bebes.length - 1 && (
+                      <Text style={styles.swipeHint}>⇨ Deslize para ver outro bebê</Text>
+                    )}
                   </View>
                 </View>
               );
@@ -214,14 +301,34 @@ export default function HomeMother({ navigation, route }) {
 
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#07A29C", left: 12, right: "auto" }]}
-              onPress={() => setSorrisosHoje(prev => (prev > 0 ? prev - 1 : 0))}
+              onPress={() => {
+                const novo = sorrisosHoje > 0 ? sorrisosHoje - 1 : 0;
+                setSorrisosHoje(novo);
+                if (user?.id) {
+                  const usuarioDoc = doc(db, "usuarios", user.id);
+                  setDoc(usuarioDoc, {
+                    sorrisosHoje: novo,
+                    ultimaAtualizacao: new Date(),
+                  }, { merge: true });
+                }
+              }}
             >
               <Text style={styles.addButtonText}>-</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: "#07A29C" }]}
-              onPress={() => setSorrisosHoje(sorrisosHoje + 1)}
+              onPress={() => {
+                const novo = sorrisosHoje + 1;
+                setSorrisosHoje(novo);
+                if (user?.id) {
+                  const usuarioDoc = doc(db, "usuarios", user.id);
+                  setDoc(usuarioDoc, {
+                    sorrisosHoje: novo,
+                    ultimaAtualizacao: new Date(),
+                  }, { merge: true });
+                }
+              }}
             >
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
@@ -248,6 +355,14 @@ export default function HomeMother({ navigation, route }) {
                   minutos = 45;
                 }
                 setTempoSono({ horas, minutos });
+                if (user?.id) {
+                  const usuarioDoc = doc(db, "usuarios", user.id);
+                  setDoc(usuarioDoc, {
+                    tempoSonoHoras: horas,
+                    tempoSonoMinutos: minutos,
+                    ultimaAtualizacao: new Date(),
+                  }, { merge: true });
+                }
               }}
             >
               <Text style={styles.addButtonText}>-</Text>
@@ -301,21 +416,50 @@ export default function HomeMother({ navigation, route }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>
-              {tipoModal === "sorrisos" ? "Digite os sorrisos de hoje" : "Digite o tempo de sono (ex: 7.5 para 7h30m)"}
+              {tipoModal === "sorrisos"
+                ? "Digite os sorrisos de hoje"
+                : "Digite o tempo de sono"}
             </Text>
-            <TextInput
-              style={styles.modalInput}
-              keyboardType="numeric"
-              value={inputModal}
-              onChangeText={setInputModal}
-              placeholder="Digite aqui"
-              placeholderTextColor="#aaa"
-            />
+            {tipoModal === "sorrisos" ? (
+              <TextInput
+                style={styles.modalInput}
+                keyboardType="numeric"
+                value={inputModal}
+                onChangeText={setInputModal}
+                placeholder="Número de sorrisos"
+                placeholderTextColor="#aaa"
+              />
+            ) : (
+              <View>
+                <TextInput
+                  style={styles.modalInput}
+                  keyboardType="numeric"
+                  value={inputHoras}
+                  onChangeText={setInputHoras}
+                  placeholder="Horas"
+                  placeholderTextColor="#aaa"
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  keyboardType="numeric"
+                  value={inputMinutos}
+                  onChangeText={setInputMinutos}
+                  placeholder="Minutos"
+                  placeholderTextColor="#aaa"
+                />
+              </View>
+            )}
             <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={[styles.modalButton, { backgroundColor: "#ccc" }]}>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={[styles.modalButton, { backgroundColor: "#ccc" }]}
+              >
                 <Text style={styles.modalButtonText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={confirmarModal} style={[styles.modalButton, { backgroundColor: "#C31E65" }]}>
+              <TouchableOpacity
+                onPress={confirmarModal}
+                style={[styles.modalButton, { backgroundColor: "#C31E65" }]}
+              >
                 <Text style={styles.modalButtonText}>OK</Text>
               </TouchableOpacity>
             </View>
@@ -395,6 +539,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#4A4A4A",
     marginTop: 4,
+  },
+  swipeHint: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#888",
+    fontStyle: "italic",
   },
   statsContainer: {
     flexDirection: "row",
@@ -535,7 +685,7 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
     color: "#000",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   modalButtons: {
     flexDirection: "row",
@@ -554,4 +704,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
+
+
 
