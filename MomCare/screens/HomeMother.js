@@ -43,7 +43,6 @@ export default function HomeMother({ navigation, route }) {
 
   const db = getFirestore(app);
 
-  // Lê os dados salvos quando o usuário entra
   useEffect(() => {
     if (!user?.id) return;
     const usuarioDoc = doc(db, "maes", user.id);
@@ -66,7 +65,6 @@ export default function HomeMother({ navigation, route }) {
             minutos: data.tempoSonoMinutos || 0,
           });
         } else {
-          // outro dia, resetar
           setSorrisosHoje(0);
           setTempoSono({ horas: 0, minutos: 0 });
           setDoc(usuarioDoc, {
@@ -77,7 +75,6 @@ export default function HomeMother({ navigation, route }) {
           }, { merge: true });
         }
       } else {
-        // não existe ainda, criar
         const hoje = new Date();
         setDoc(usuarioDoc, {
           sorrisosHoje: 0,
@@ -89,7 +86,6 @@ export default function HomeMother({ navigation, route }) {
     });
   }, [user]);
 
-  // Reset diário
   useEffect(() => {
     const now = new Date();
     const millisTillMidnight =
@@ -113,7 +109,6 @@ export default function HomeMother({ navigation, route }) {
     return () => clearTimeout(resetTimer);
   }, [user]);
 
-  // Carrega lista de bebês
   useEffect(() => {
     if (!user?.id) return;
 
@@ -411,7 +406,6 @@ export default function HomeMother({ navigation, route }) {
         </View>
       </ScrollView>
 
-      {/* MODAL DE ENTRADA */}
       <Modal transparent={true} animationType="fade" visible={modalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
