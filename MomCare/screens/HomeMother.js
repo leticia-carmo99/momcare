@@ -117,15 +117,15 @@ export default function HomeMother({ navigation, route }) {
       // Substituído Alert.alert por modal customizado
       showAlertModal(
         "Sucesso!",
-        "Foto do bebê atualizada! (Salva no Firestore)",
-        "#00B61C"
+        "Foto do bebê atualizada!",
+        "#C31E65"
       );
     } catch (error) {
       console.error("Erro ao salvar a imagem no Firestore:", error);
       // Substituído Alert.alert por modal customizado
       showAlertModal(
         "Erro",
-        "Não foi possível salvar a foto no Firestore. Verifique se a imagem não é muito grande (limite de 1MB por documento).",
+        "Não foi possível salvar a foto, verifique se ela não é muito grande.",
         "#C6266C"
       );
     } finally {
@@ -325,7 +325,7 @@ export default function HomeMother({ navigation, route }) {
         // Usa o novo modal de alerta para feedback de erro
         showAlertModal(
           "Erro de Input",
-          "Por favor, insira valores válidos para Horas (0-23) e Minutos (0-59).",
+          "Por favor, insira valores válidos para horas (0-23) e minutos (0-59).",
           "#C6266C"
         );
         return;
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
-    backgroundColor: "#ccc",
+    backgroundColor: "#fff",
   },
   babyImagePlaceholder: {
     width: "100%",
