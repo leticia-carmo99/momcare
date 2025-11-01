@@ -8,15 +8,18 @@ import {
   Image,
   Modal,
   TextInput,
+  Alert, // Adicionado para alertas de erro
 } from "react-native";
 import {
   Ionicons,
   MaterialCommunityIcons,
   FontAwesome,
+  Feather, // Adicionado o Feather para o ícone de caneta
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNavMother";
 import babyImage from "../assets/baby.png";
+import * as ImagePicker from "expo-image-picker"; // Adicionado ImagePicker
 import {
   getFirestore,
   collection,
@@ -26,7 +29,9 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc, // Adicionado updateDoc
 } from "firebase/firestore";
+// REMOVIDO: importações do Firebase Storage
 import { app } from "../firebaseConfig";
 
 export default function HomeMother({ navigation, route }) {
@@ -41,8 +46,65 @@ export default function HomeMother({ navigation, route }) {
   const [inputMinutos, setInputMinutos] = useState("");
   const [inputModal, setInputModal] = useState("");
   const [bebeAtivo, setBebeAtivo] = useState(0); // novo estado para o índice do bebê visível
+  const [isUploading, setIsUploading] = useState(false); // Novo estado para upload de imagem
 
   const db = getFirestore(app);
+  // REMOVIDO: Inicialização do Storage
+
+  // Função para pegar a imagem
+  const pickImage = async (bebeId) => {
+    if (isUploading) return;
+
+    // Solicita permissão para a galeria
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permissão Negada",
+        "Precisamos de permissão para acessar sua galeria de fotos!"
+      );
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true, // NOVO: Pede a imagem em Base64
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const base64 = result.assets[0].base64; // NOVO: Pega o Base64
+      uploadImage(base64, bebeId); // NOVO: Passa o Base64 para a função de upload/salvamento
+    }
+  };
+
+  // Função para salvar o Base64 Data URI no Firestore
+  const uploadImage = async (base64Data, bebeId) => {
+    setIsUploading(true);
+    try {
+      // Cria o Data URI para ser usado pelo componente Image
+      // Assumindo image/jpeg, que é comum com quality: 0.8
+      const dataUri = `data:image/jpeg;base64,${base64Data}`;
+
+      // Salva o Data URI (fotoURL) no Firestore
+      const bebeDocRef = doc(db, "bebes", bebeId);
+      await updateDoc(bebeDocRef, {
+        fotoURL: dataUri, // Agora fotoURL armazena o Data URI Base64
+      });
+
+      // Se bem sucedido, a atualização do Firestore irá acionar o onSnapshot
+      Alert.alert("Sucesso", "Foto do bebê atualizada! (Salva no Firestore)");
+    } catch (error) {
+      console.error("Erro ao salvar a imagem no Firestore:", error);
+      Alert.alert(
+        "Erro",
+        "Não foi possível salvar a foto no Firestore. Verifique se a imagem não é muito grande (limite de 1MB por documento)."
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) return;
@@ -283,6 +345,7 @@ export default function HomeMother({ navigation, route }) {
           {bebes.length > 0 ? (
             bebes.map((bebe, index) => {
               const primeiroNome = bebe.nome.split(" ")[0];
+              const fotoUrl = bebe.fotoURL; // Pega a URL (agora Data URI) da foto do bebê
               return (
                 <View
                   key={bebe.id}
@@ -294,7 +357,26 @@ export default function HomeMother({ navigation, route }) {
                     },
                   ]}
                 >
-                  <Image source={babyImage} style={styles.babyImage} />
+                  <TouchableOpacity
+                    onPress={() => pickImage(bebe.id)} // Chamada para abrir o seletor de imagem
+                    style={styles.babyImageWrapper}
+                  >
+                    {fotoUrl ? (
+                      <Image
+                        source={{ uri: fotoUrl }}
+                        style={styles.babyImage}
+                      />
+                    ) : (
+                      <View style={styles.babyImagePlaceholder}>
+                        <Feather
+                          name="edit"
+                          size={30}
+                          color="#C31E65"
+                          style={styles.editIcon}
+                        />
+                      </View>
+                    )}
+                  </TouchableOpacity>
                   <View style={{ marginLeft: 12, flex: 1 }}>
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
                       <Text style={styles.babyName}>{primeiroNome}</Text>
@@ -354,7 +436,7 @@ export default function HomeMother({ navigation, route }) {
                 const novo = sorrisosHoje > 0 ? sorrisosHoje - 1 : 0;
                 setSorrisosHoje(novo);
                 if (user?.id) {
-                  const usuarioDoc = doc(db, "usuarios", user.id);
+                  const usuarioDoc = doc(db, "maes", user.id); // Corrigido de 'usuarios' para 'maes'
                   setDoc(
                     usuarioDoc,
                     {
@@ -375,7 +457,7 @@ export default function HomeMother({ navigation, route }) {
                 const novo = sorrisosHoje + 1;
                 setSorrisosHoje(novo);
                 if (user?.id) {
-                  const usuarioDoc = doc(db, "usuarios", user.id);
+                  const usuarioDoc = doc(db, "maes", user.id); // Corrigido de 'usuarios' para 'maes'
                   setDoc(
                     usuarioDoc,
                     {
@@ -416,7 +498,7 @@ export default function HomeMother({ navigation, route }) {
                 }
                 setTempoSono({ horas, minutos });
                 if (user?.id) {
-                  const usuarioDoc = doc(db, "usuarios", user.id);
+                  const usuarioDoc = doc(db, "maes", user.id); // Corrigido de 'usuarios' para 'maes'
                   setDoc(
                     usuarioDoc,
                     {
@@ -581,10 +663,30 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#F7E2EB",
   },
+  // Novo estilo para o wrapper da imagem
+  babyImageWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden", // Para garantir que a imagem/placeholder fique dentro do borderRadius
+    backgroundColor: "#ccc", // Fundo cinza quando não há foto
+  },
+  babyImagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   babyImage: {
     width: 64,
     height: 64,
     borderRadius: 32,
+  },
+  editIcon: {
+    position: "absolute",
+    // Cor e tamanho ajustados para o ícone de canetinha
   },
   babyName: {
     fontWeight: "bold",
@@ -626,7 +728,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
   },
-  /* resto do CSS inalterado */
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
