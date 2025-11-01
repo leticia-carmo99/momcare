@@ -8,18 +8,18 @@ import {
   Image,
   Modal,
   TextInput,
-  Alert, // Adicionado para alertas de erro
+  // Alert removido, usando Modal customizado
 } from "react-native";
 import {
   Ionicons,
   MaterialCommunityIcons,
   FontAwesome,
-  Feather, // Adicionado o Feather para o ícone de caneta
+  Feather,
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNavMother";
 import babyImage from "../assets/baby.png";
-import * as ImagePicker from "expo-image-picker"; // Adicionado ImagePicker
+import * as ImagePicker from "expo-image-picker";
 import {
   getFirestore,
   collection,
@@ -29,7 +29,7 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc, // Adicionado updateDoc
+  updateDoc,
 } from "firebase/firestore";
 // REMOVIDO: importações do Firebase Storage
 import { app } from "../firebaseConfig";
@@ -45,11 +45,32 @@ export default function HomeMother({ navigation, route }) {
   const [inputHoras, setInputHoras] = useState("");
   const [inputMinutos, setInputMinutos] = useState("");
   const [inputModal, setInputModal] = useState("");
-  const [bebeAtivo, setBebeAtivo] = useState(0); // novo estado para o índice do bebê visível
-  const [isUploading, setIsUploading] = useState(false); // Novo estado para upload de imagem
+  const [bebeAtivo, setBebeAtivo] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // NOVOS ESTADOS PARA O MODAL DE ALERTA CUSTOMIZADO
+  const [alertModalVisible, setAlertModalVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertColor, setAlertColor] = useState("#C31E65"); // Default primary color
 
   const db = getFirestore(app);
-  // REMOVIDO: Inicialização do Storage
+
+  // Função para mostrar o modal de alerta customizado
+  const showAlertModal = (title, message, color = "#C31E65") => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertColor(color);
+    setAlertModalVisible(true);
+  };
+
+  // Função para manipular a entrada numérica com limite de 2 dígitos e sem caracteres especiais
+  const handleNumericInput = (text, setter) => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    if (numericValue.length <= 2) {
+      setter(numericValue);
+    }
+  };
 
   // Função para pegar a imagem
   const pickImage = async (bebeId) => {
@@ -58,9 +79,10 @@ export default function HomeMother({ navigation, route }) {
     // Solicita permissão para a galeria
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(
+      showAlertModal(
         "Permissão Negada",
-        "Precisamos de permissão para acessar sua galeria de fotos!"
+        "Precisamos de permissão para acessar sua galeria de fotos!",
+        "#C31E65"
       );
       return;
     }
@@ -70,12 +92,12 @@ export default function HomeMother({ navigation, route }) {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
-      base64: true, // NOVO: Pede a imagem em Base64
+      base64: true,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const base64 = result.assets[0].base64; // NOVO: Pega o Base64
-      uploadImage(base64, bebeId); // NOVO: Passa o Base64 para a função de upload/salvamento
+      const base64 = result.assets[0].base64;
+      uploadImage(base64, bebeId);
     }
   };
 
@@ -84,22 +106,27 @@ export default function HomeMother({ navigation, route }) {
     setIsUploading(true);
     try {
       // Cria o Data URI para ser usado pelo componente Image
-      // Assumindo image/jpeg, que é comum com quality: 0.8
       const dataUri = `data:image/jpeg;base64,${base64Data}`;
 
       // Salva o Data URI (fotoURL) no Firestore
       const bebeDocRef = doc(db, "bebes", bebeId);
       await updateDoc(bebeDocRef, {
-        fotoURL: dataUri, // Agora fotoURL armazena o Data URI Base64
+        fotoURL: dataUri,
       });
 
-      // Se bem sucedido, a atualização do Firestore irá acionar o onSnapshot
-      Alert.alert("Sucesso", "Foto do bebê atualizada! (Salva no Firestore)");
+      // Substituído Alert.alert por modal customizado
+      showAlertModal(
+        "Sucesso!",
+        "Foto do bebê atualizada! (Salva no Firestore)",
+        "#00B61C"
+      );
     } catch (error) {
       console.error("Erro ao salvar a imagem no Firestore:", error);
-      Alert.alert(
+      // Substituído Alert.alert por modal customizado
+      showAlertModal(
         "Erro",
-        "Não foi possível salvar a foto no Firestore. Verifique se a imagem não é muito grande (limite de 1MB por documento)."
+        "Não foi possível salvar a foto no Firestore. Verifique se a imagem não é muito grande (limite de 1MB por documento).",
+        "#C6266C"
       );
     } finally {
       setIsUploading(false);
@@ -243,6 +270,7 @@ export default function HomeMother({ navigation, route }) {
     if (tipo === "sorrisos") {
       setInputModal(sorrisosHoje.toString());
     } else if (tipo === "sono") {
+      // Ajuste: Remove a sugestão de zero inicial. toString já faz isso para números.
       setInputHoras(tempoSono.horas.toString());
       setInputMinutos(tempoSono.minutos.toString());
     }
@@ -267,14 +295,18 @@ export default function HomeMother({ navigation, route }) {
         }
       }
     } else if (tipoModal === "sono") {
-      const horas = parseInt(inputHoras);
-      const minutos = parseInt(inputMinutos);
+      // Usa "0" se o campo estiver vazio para garantir que parseInt não retorne NaN
+      const horas = parseInt(inputHoras || "0");
+      const minutos = parseInt(inputMinutos || "0");
+
+      // NOVO: Validação aprimorada para Horas (0-23) e Minutos (0-59)
       if (
         !isNaN(horas) &&
         horas >= 0 &&
+        horas <= 23 && // Limite de 23 horas
         !isNaN(minutos) &&
         minutos >= 0 &&
-        minutos < 60
+        minutos <= 59 // Limite de 59 minutos
       ) {
         setTempoSono({ horas, minutos });
         if (user?.id) {
@@ -289,6 +321,14 @@ export default function HomeMother({ navigation, route }) {
             { merge: true }
           );
         }
+      } else {
+        // Usa o novo modal de alerta para feedback de erro
+        showAlertModal(
+          "Erro de Input",
+          "Por favor, insira valores válidos para Horas (0-23) e Minutos (0-59).",
+          "#C6266C"
+        );
+        return;
       }
     }
     setModalVisible(false);
@@ -345,7 +385,7 @@ export default function HomeMother({ navigation, route }) {
           {bebes.length > 0 ? (
             bebes.map((bebe, index) => {
               const primeiroNome = bebe.nome.split(" ")[0];
-              const fotoUrl = bebe.fotoURL; // Pega a URL (agora Data URI) da foto do bebê
+              const fotoUrl = bebe.fotoURL;
               return (
                 <View
                   key={bebe.id}
@@ -358,7 +398,7 @@ export default function HomeMother({ navigation, route }) {
                   ]}
                 >
                   <TouchableOpacity
-                    onPress={() => pickImage(bebe.id)} // Chamada para abrir o seletor de imagem
+                    onPress={() => pickImage(bebe.id)}
                     style={styles.babyImageWrapper}
                   >
                     {fotoUrl ? (
@@ -436,7 +476,7 @@ export default function HomeMother({ navigation, route }) {
                 const novo = sorrisosHoje > 0 ? sorrisosHoje - 1 : 0;
                 setSorrisosHoje(novo);
                 if (user?.id) {
-                  const usuarioDoc = doc(db, "maes", user.id); // Corrigido de 'usuarios' para 'maes'
+                  const usuarioDoc = doc(db, "maes", user.id);
                   setDoc(
                     usuarioDoc,
                     {
@@ -457,7 +497,7 @@ export default function HomeMother({ navigation, route }) {
                 const novo = sorrisosHoje + 1;
                 setSorrisosHoje(novo);
                 if (user?.id) {
-                  const usuarioDoc = doc(db, "maes", user.id); // Corrigido de 'usuarios' para 'maes'
+                  const usuarioDoc = doc(db, "maes", user.id);
                   setDoc(
                     usuarioDoc,
                     {
@@ -498,7 +538,7 @@ export default function HomeMother({ navigation, route }) {
                 }
                 setTempoSono({ horas, minutos });
                 if (user?.id) {
-                  const usuarioDoc = doc(db, "maes", user.id); // Corrigido de 'usuarios' para 'maes'
+                  const usuarioDoc = doc(db, "maes", user.id);
                   setDoc(
                     usuarioDoc,
                     {
@@ -562,6 +602,7 @@ export default function HomeMother({ navigation, route }) {
         </View>
       </ScrollView>
 
+      {/* Modal para Sorrisos/Sono (Original) */}
       <Modal transparent={true} animationType="fade" visible={modalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -580,12 +621,14 @@ export default function HomeMother({ navigation, route }) {
                 placeholderTextColor="#aaa"
               />
             ) : (
+              // NOVO: Aplicação de limites de 2 dígitos e handlers aprimorados
               <View>
                 <TextInput
                   style={styles.modalInput}
                   keyboardType="numeric"
                   value={inputHoras}
-                  onChangeText={setInputHoras}
+                  maxLength={2}
+                  onChangeText={(text) => handleNumericInput(text, setInputHoras)}
                   placeholder="Horas"
                   placeholderTextColor="#aaa"
                 />
@@ -593,7 +636,8 @@ export default function HomeMother({ navigation, route }) {
                   style={styles.modalInput}
                   keyboardType="numeric"
                   value={inputMinutos}
-                  onChangeText={setInputMinutos}
+                  maxLength={2}
+                  onChangeText={(text) => handleNumericInput(text, setInputMinutos)}
                   placeholder="Minutos"
                   placeholderTextColor="#aaa"
                 />
@@ -611,6 +655,26 @@ export default function HomeMother({ navigation, route }) {
                 style={[styles.modalButton, { backgroundColor: "#C31E65" }]}
               >
                 <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* NOVO MODAL DE ALERTA CUSTOMIZADO */}
+      <Modal transparent={true} animationType="fade" visible={alertModalVisible}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={[styles.modalTitle, { color: alertColor, marginBottom: 15 }]}>
+              {alertTitle}
+            </Text>
+            <Text style={[styles.alertMessage]}>{alertMessage}</Text>
+            <View style={[styles.modalButtons, { marginTop: 20 }]}>
+              <TouchableOpacity
+                onPress={() => setAlertModalVisible(false)}
+                style={[styles.modalButton, { backgroundColor: alertColor, marginHorizontal: 0, width: "100%" }]}
+              >
+                <Text style={styles.modalButtonText}>Entendi</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -663,15 +727,14 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#F7E2EB",
   },
-  // Novo estilo para o wrapper da imagem
   babyImageWrapper: {
     width: 64,
     height: 64,
     borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden", // Para garantir que a imagem/placeholder fique dentro do borderRadius
-    backgroundColor: "#ccc", // Fundo cinza quando não há foto
+    overflow: "hidden",
+    backgroundColor: "#ccc",
   },
   babyImagePlaceholder: {
     width: "100%",
@@ -686,7 +749,6 @@ const styles = StyleSheet.create({
   },
   editIcon: {
     position: "absolute",
-    // Cor e tamanho ajustados para o ícone de canetinha
   },
   babyName: {
     fontWeight: "bold",
@@ -884,5 +946,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 14,
+  },
+  // NOVO ESTILO: Mensagem de alerta customizada
+  alertMessage: {
+    fontSize: 15,
+    color: '#333',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
