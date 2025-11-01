@@ -40,6 +40,7 @@ export default function HomeMother({ navigation, route }) {
   const [inputHoras, setInputHoras] = useState("");
   const [inputMinutos, setInputMinutos] = useState("");
   const [inputModal, setInputModal] = useState("");
+  const [bebeAtivo, setBebeAtivo] = useState(0); // novo estado para o índice do bebê visível
 
   const db = getFirestore(app);
 
@@ -67,12 +68,16 @@ export default function HomeMother({ navigation, route }) {
         } else {
           setSorrisosHoje(0);
           setTempoSono({ horas: 0, minutos: 0 });
-          setDoc(usuarioDoc, {
-            sorrisosHoje: 0,
-            tempoSonoHoras: 0,
-            tempoSonoMinutos: 0,
-            ultimaAtualizacao: hoje,
-          }, { merge: true });
+          setDoc(
+            usuarioDoc,
+            {
+              sorrisosHoje: 0,
+              tempoSonoHoras: 0,
+              tempoSonoMinutos: 0,
+              ultimaAtualizacao: hoje,
+            },
+            { merge: true }
+          );
         }
       } else {
         const hoje = new Date();
@@ -89,7 +94,8 @@ export default function HomeMother({ navigation, route }) {
   useEffect(() => {
     const now = new Date();
     const millisTillMidnight =
-      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) -
+      now;
 
     const resetTimer = setTimeout(() => {
       if (user?.id) {
@@ -97,12 +103,16 @@ export default function HomeMother({ navigation, route }) {
         const hoje = new Date();
         setSorrisosHoje(0);
         setTempoSono({ horas: 0, minutos: 0 });
-        setDoc(usuarioDoc, {
-          sorrisosHoje: 0,
-          tempoSonoHoras: 0,
-          tempoSonoMinutos: 0,
-          ultimaAtualizacao: hoje,
-        }, { merge: true });
+        setDoc(
+          usuarioDoc,
+          {
+            sorrisosHoje: 0,
+            tempoSonoHoras: 0,
+            tempoSonoMinutos: 0,
+            ultimaAtualizacao: hoje,
+          },
+          { merge: true }
+        );
       }
     }, millisTillMidnight);
 
@@ -154,11 +164,15 @@ export default function HomeMother({ navigation, route }) {
     const usuarioDoc = user?.id ? doc(db, "maes", user.id) : null;
     setTempoSono({ horas, minutos });
     if (usuarioDoc) {
-      setDoc(usuarioDoc, {
-        tempoSonoHoras: horas,
-        tempoSonoMinutos: minutos,
-        ultimaAtualizacao: new Date(),
-      }, { merge: true });
+      setDoc(
+        usuarioDoc,
+        {
+          tempoSonoHoras: horas,
+          tempoSonoMinutos: minutos,
+          ultimaAtualizacao: new Date(),
+        },
+        { merge: true }
+      );
     }
   }
 
@@ -180,24 +194,38 @@ export default function HomeMother({ navigation, route }) {
         setSorrisosHoje(valor);
         if (user?.id) {
           const usuarioDoc = doc(db, "maes", user.id);
-          setDoc(usuarioDoc, {
-            sorrisosHoje: valor,
-            ultimaAtualizacao: new Date(),
-          }, { merge: true });
+          setDoc(
+            usuarioDoc,
+            {
+              sorrisosHoje: valor,
+              ultimaAtualizacao: new Date(),
+            },
+            { merge: true }
+          );
         }
       }
     } else if (tipoModal === "sono") {
       const horas = parseInt(inputHoras);
       const minutos = parseInt(inputMinutos);
-      if (!isNaN(horas) && horas >= 0 && !isNaN(minutos) && minutos >= 0 && minutos < 60) {
+      if (
+        !isNaN(horas) &&
+        horas >= 0 &&
+        !isNaN(minutos) &&
+        minutos >= 0 &&
+        minutos < 60
+      ) {
         setTempoSono({ horas, minutos });
         if (user?.id) {
           const usuarioDoc = doc(db, "maes", user.id);
-          setDoc(usuarioDoc, {
-            tempoSonoHoras: horas,
-            tempoSonoMinutos: minutos,
-            ultimaAtualizacao: new Date(),
-          }, { merge: true });
+          setDoc(
+            usuarioDoc,
+            {
+              tempoSonoHoras: horas,
+              tempoSonoMinutos: minutos,
+              ultimaAtualizacao: new Date(),
+            },
+            { merge: true }
+          );
         }
       }
     }
@@ -236,11 +264,21 @@ export default function HomeMother({ navigation, route }) {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 25 }}
-          contentContainerStyle={{ alignItems: "center", paddingLeft: 12, paddingRight: 15 }}
+          style={{ marginBottom: 10 }}
+          contentContainerStyle={{
+            alignItems: "center",
+            paddingLeft: 12,
+            paddingRight: 15,
+          }}
           snapToInterval={345}
           decelerationRate="fast"
           snapToAlignment="start"
+          onScroll={(e) => {
+            const x = e.nativeEvent.contentOffset.x;
+            const index = Math.round(x / 340);
+            setBebeAtivo(index);
+          }}
+          scrollEventThrottle={16}
         >
           {bebes.length > 0 ? (
             bebes.map((bebe, index) => {
@@ -269,9 +307,6 @@ export default function HomeMother({ navigation, route }) {
                     <Text style={styles.babyStatus}>
                       Crescendo forte e saudável!
                     </Text>
-                    { index === bebes.length - 1 && (
-                      <Text style={styles.swipeHint}>⇨ Deslize para ver outro bebê</Text>
-                    )}
                   </View>
                 </View>
               );
@@ -283,6 +318,22 @@ export default function HomeMother({ navigation, route }) {
           )}
         </ScrollView>
 
+        {/* Bolinhas de navegação (apenas se houver mais de um bebê) */}
+        {bebes.length > 1 && (
+          <View style={styles.dotsContainer}>
+            {bebes.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.dot,
+                  bebeAtivo === i && styles.activeDot,
+                ]}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* resto do código permanece idêntico */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
@@ -295,16 +346,23 @@ export default function HomeMother({ navigation, route }) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: "#07A29C", left: 12, right: "auto" }]}
+              style={[
+                styles.addButton,
+                { backgroundColor: "#07A29C", left: 12, right: "auto" },
+              ]}
               onPress={() => {
                 const novo = sorrisosHoje > 0 ? sorrisosHoje - 1 : 0;
                 setSorrisosHoje(novo);
                 if (user?.id) {
                   const usuarioDoc = doc(db, "usuarios", user.id);
-                  setDoc(usuarioDoc, {
-                    sorrisosHoje: novo,
-                    ultimaAtualizacao: new Date(),
-                  }, { merge: true });
+                  setDoc(
+                    usuarioDoc,
+                    {
+                      sorrisosHoje: novo,
+                      ultimaAtualizacao: new Date(),
+                    },
+                    { merge: true }
+                  );
                 }
               }}
             >
@@ -318,10 +376,14 @@ export default function HomeMother({ navigation, route }) {
                 setSorrisosHoje(novo);
                 if (user?.id) {
                   const usuarioDoc = doc(db, "usuarios", user.id);
-                  setDoc(usuarioDoc, {
-                    sorrisosHoje: novo,
-                    ultimaAtualizacao: new Date(),
-                  }, { merge: true });
+                  setDoc(
+                    usuarioDoc,
+                    {
+                      sorrisosHoje: novo,
+                      ultimaAtualizacao: new Date(),
+                    },
+                    { merge: true }
+                  );
                 }
               }}
             >
@@ -340,7 +402,10 @@ export default function HomeMother({ navigation, route }) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: "#00B61C", left: 12, right: "auto" }]}
+              style={[
+                styles.addButton,
+                { backgroundColor: "#00B61C", left: 12, right: "auto" },
+              ]}
               onPress={() => {
                 let { horas, minutos } = tempoSono;
                 if (horas === 0 && minutos === 0) return;
@@ -352,11 +417,15 @@ export default function HomeMother({ navigation, route }) {
                 setTempoSono({ horas, minutos });
                 if (user?.id) {
                   const usuarioDoc = doc(db, "usuarios", user.id);
-                  setDoc(usuarioDoc, {
-                    tempoSonoHoras: horas,
-                    tempoSonoMinutos: minutos,
-                    ultimaAtualizacao: new Date(),
-                  }, { merge: true });
+                  setDoc(
+                    usuarioDoc,
+                    {
+                      tempoSonoHoras: horas,
+                      tempoSonoMinutos: minutos,
+                      ultimaAtualizacao: new Date(),
+                    },
+                    { merge: true }
+                  );
                 }
               }}
             >
@@ -378,7 +447,8 @@ export default function HomeMother({ navigation, route }) {
             <Text style={styles.tipTitle}>Dica do dia</Text>
           </View>
           <Text style={styles.tipText}>
-            Lembre-se de manter a rotina do bebê consistente para um desenvolvimento saudável. Nós estamos com você!
+            Lembre-se de manter a rotina do bebê consistente para um
+            desenvolvimento saudável. Nós estamos com você!
           </Text>
         </View>
 
@@ -397,7 +467,11 @@ export default function HomeMother({ navigation, route }) {
           </View>
 
           <View style={styles.activityItem}>
-            <MaterialCommunityIcons name="bathtub-outline" size={22} color="#C31E65" />
+            <MaterialCommunityIcons
+              name="bathtub-outline"
+              size={22}
+              color="#C31E65"
+            />
             <View style={styles.activityTextContainer}>
               <Text style={styles.activityText}>Banho</Text>
               <Text style={styles.activitySubText}>Hoje às 16h</Text>
@@ -534,12 +608,25 @@ const styles = StyleSheet.create({
     color: "#4A4A4A",
     marginTop: 4,
   },
-  swipeHint: {
-    marginTop: 8,
-    fontSize: 12,
-    color: "#888",
-    fontStyle: "italic",
+  dotsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 25,
   },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#FFD6E7",
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: "#C31E65",
+    width: 10,
+    height: 10,
+  },
+  /* resto do CSS inalterado */
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -698,7 +785,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-
-
-
-
