@@ -30,9 +30,6 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 const CustomAlertModal = ({ isVisible, title, message, onConfirm, onCancel, confirmText = "OK", cancelText }) => (
   <Modal 
     isVisible={isVisible}
-    backdropOpacity={0} 
-    animationIn="fadeIn"
-    animationOut="fadeOut"
   >
     <View style={customStyles.modalOverlay}>
       <View style={customStyles.modalContainer}>
@@ -61,7 +58,7 @@ const CustomAlertModal = ({ isVisible, title, message, onConfirm, onCancel, conf
 const customStyles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -71,7 +68,6 @@ const customStyles = StyleSheet.create({
     borderRadius: 20, 
     padding: 25,
     alignItems: "center",
-    shadowColor: "#C31E65", 
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -816,7 +812,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#FFD6EC",
   },
   modalTitle: {
     fontSize: 16,
