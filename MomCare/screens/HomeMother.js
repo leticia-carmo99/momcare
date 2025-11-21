@@ -8,7 +8,6 @@ import {
   Image,
   Modal,
   TextInput,
-  // Alert removido, usando Modal customizado
 } from "react-native";
 import {
   Ionicons,
@@ -31,7 +30,6 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-// REMOVIDO: importações do Firebase Storage
 import { app } from "../firebaseConfig";
 
 export default function HomeMother({ navigation, route }) {
@@ -41,22 +39,20 @@ export default function HomeMother({ navigation, route }) {
   const [tempoSono, setTempoSono] = useState({ horas: 0, minutos: 0 });
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [tipoModal, setTipoModal] = useState(null); // 'sorrisos' ou 'sono'
+  const [tipoModal, setTipoModal] = useState(null); 
   const [inputHoras, setInputHoras] = useState("");
   const [inputMinutos, setInputMinutos] = useState("");
   const [inputModal, setInputModal] = useState("");
   const [bebeAtivo, setBebeAtivo] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
-  // NOVOS ESTADOS PARA O MODAL DE ALERTA CUSTOMIZADO
   const [alertModalVisible, setAlertModalVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
-  const [alertColor, setAlertColor] = useState("#C31E65"); // Default primary color
+  const [alertColor, setAlertColor] = useState("#C31E65"); 
 
   const db = getFirestore(app);
 
-  // Função para mostrar o modal de alerta customizado
   const showAlertModal = (title, message, color = "#C31E65") => {
     setAlertTitle(title);
     setAlertMessage(message);
@@ -324,7 +320,7 @@ export default function HomeMother({ navigation, route }) {
       } else {
         // Usa o novo modal de alerta para feedback de erro
         showAlertModal(
-          "Erro de Input",
+          "Erro",
           "Por favor, insira valores válidos para horas (0-23) e minutos (0-59).",
           "#C6266C"
         );
