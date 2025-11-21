@@ -6,6 +6,7 @@ import campoDeFlores from "../assets/campodeflores.png";
 import coracao from "../assets/coracao.png";
 
 export default function Daily({ navigation }) {
+  const { user } = route.params;
   const diarioEntries = [
     { text: "Um dia complicado para mim e a Elena", date: "27/05/2025", mood: "Triste" },
     { text: "Hoje nos divertimos muito no parque!", date: "26/05/2025", mood: "Feliz" },
