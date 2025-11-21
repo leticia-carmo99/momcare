@@ -303,7 +303,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
     try {
       const docRef = await addDoc(collection(db, "bebes"), {
         userId: user.id,
-        nomeMae: user.name,
+        usernameMae: user.username,
         nome: babyName.trim(),
         dataNascimento: babyBirthDate.toISOString(),
         pesoAtual: babyWeight.trim(),
