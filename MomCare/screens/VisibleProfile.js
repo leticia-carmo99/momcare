@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 export default function VisibleProfile({ navigation }) {
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#ff" />
 
       <TouchableOpacity
         onPress={() => navigation.goBack()}

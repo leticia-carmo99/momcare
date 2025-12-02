@@ -1,106 +1,113 @@
-import React from "react";
+import React, { useState, useEffect} from "react";
 import {View, Text, StyleSheet, TextInput, FlatList, Image, TouchableOpacity, } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 import FotoArtigo from "../assets/fotoartigo.png";
+import {
+  doc,
+  collection,
+  getDocs,
+  query,
+  where,
+  getDoc
+} from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
-const posts = [
-  {
-    id: "1",
-    name: "Natália dos Santos",
-    handle: "@nat.san.pasc",
-    time: "5 min",
-    message:
-      "Alguém mais está tendo dificuldades para amamentar? Meu bebê não pega o peito direito, e estou super preocupada.",
-    date: "01/08/2025 - 13h28",
-    comments: 23,
-    likes: 32,
-    avatar: "https://randomuser.me/api/portraits/women/65.jpg",
-    image: null,
-  },
-  {
-    id: "2",
-    name: "Mayara Almeida",
-    handle: "@maymay",
-    time: "10 min",
-    message:
-      "Sou médica e mãe de dois filhos. Percebi que muitas mamães têm dificuldades com a introdução alimentar, por isso resolvi escrever sobre como tornar essa fase mais tranquila e segura. Clique aqui embaixo para saber mais e tirar suas dúvidas!",
-    date: "01/08/2025 - 13h28",
-    comments: 0,
-    likes: 0,
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    image: "local",
-  },
-  {
-    id: "3",
-    name: "Verônica de Oliveira",
-    handle: "@veta.2007",
-    time: "10 min",
-    message: "Alguém tem dicas de como fazer o bebê arrotar? Ele está com gases.",
-    date: "01/08/2025 - 13h28",
-    comments: 12,
-    likes: 20,
-    avatar: "https://randomuser.me/api/portraits/women/30.jpg",
-    image: null,
-  },
-  {
-    id: "4",
-    name: "Ana Costa",
-    handle: "@ana.costa",
-    time: "20 min",
-    message:
-      "Meu bebê tem tido cólicas frequentemente e eu estou bem preocupada. Alguém tem alguma dica para ajudar?",
-    date: "01/08/2025 - 14h00",
-    comments: 5,
-    likes: 8,
-    avatar: "https://randomuser.me/api/portraits/women/36.jpg",
-    image: null,
-  },
-  {
-    id: "5",
-    name: "Joana Silva",
-    handle: "@joana.silva",
-    time: "30 min",
-    message:
-      "Alguém mais tem dificuldades para fazer o bebê dormir a noite? Estou ficando exausta tentando estabelecer uma rotina.",
-    date: "01/08/2025 - 14h10",
-    comments: 7,
-    likes: 15,
-    avatar: "https://randomuser.me/api/portraits/women/50.jpg",
-    image: null,
-  },
-];
+async function getAutorData(userId) {
+  if (!userId) return null;
+
+  const maeRef = doc(db, "maes", userId);
+  const maeSnap = await getDoc(maeRef);
+  if (maeSnap.exists()) {
+    return {
+      tipo: "mae",
+      ...maeSnap.data(),
+      id: maeSnap.id
+    };
+  }
+
+  const profRef = doc(db, "profissionais", userId);
+  const profSnap = await getDoc(profRef);
+  if (profSnap.exists()) {
+    return {
+      tipo: "profissional",
+      ...profSnap.data(),
+      id: profSnap.id
+    };
+  }
+
+  return null; 
+}
+
+
+function normalizeAvatar(avatar) {
+  if (!avatar)
+    return "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSaSnx4pDeEoWy95h-dyBYcyYEgOUHaYXBKpA&usqp=CAU";
+  if (typeof avatar === "object" && avatar?.uri) return avatar.uri;
+  if (typeof avatar === "string") return avatar;
+  return "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSaSnx4pDeEoWy95h-dyBYcyYEgOUHaYXBKpA&usqp=CAU";
+}
 
 export default function ForumMother({ navigation }) {
+  const [postsState, setPostsState] = useState([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const postCollectionRef = collection(db, 'forum');
+        const snapshot = await getDocs(postCollectionRef);
+
+        const fetchedPosts = await Promise.all(
+        snapshot.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+          const comentariosRef = collection(db, "forum", docSnap.id, "comentarios");
+          const comentariosSnap = await getDocs(comentariosRef);
+          const autorInfo = await getAutorData(data.id_autor);
+          const totalCurtidas = data.curtidas ? data.curtidas.length : 0;
+          const totalComentarios = comentariosSnap.size;
+          
+          return {
+            id: docSnap.id,
+            autor: autorInfo?.name ?? data.autor ?? "Usuário",
+            email: autorInfo?.email ?? data.email_autor,
+            avatar: normalizeAvatar(autorInfo?.avatar ?? data.avatar),
+            conteudo: data.conteudo,
+            curtidas: totalCurtidas,
+            comentarios: totalComentarios,
+            data: data.data,
+            idAutor: data.id_autor || "Usuário",
+            tempo: data.tempo || "5 min",
+            titulo: data.titulo || "Sem descrição",
+          };
+        })
+      );
+
+        setPostsState(fetchedPosts);
+      } catch (error) {
+        console.error("Erro ao buscar posts:", error);
+      } finally {
+        setIsLoadingPosts(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
   const renderItem = ({ item }) => {
-    
-    const postHeader =
-      item.id === "1" ? (
+    const fotoAvatar = typeof item.avatar === 'string' && item.avatar.startsWith('http') 
+        ? { uri: item.avatar } 
+        : item.avatar; 
+    const postHeader = (
         <View style={styles.postHeader}>
-          <TouchableOpacity
-            style={{ flexDirection: "row", flex: 1, alignItems: "center" }}
-            onPress={() => navigation.navigate("VisibleProfile")}
-          >
-            <Image source={{ uri: item.avatar }} style={styles.avatar} />
-            <View style={{ marginLeft: 10 }}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={[styles.handle, { color: "#C31E65" }]}>
-                {item.handle}
-              </Text>
-            </View>
-          </TouchableOpacity>
-          <Text style={styles.time}>{item.time}</Text>
-        </View>
-      ) : (
-        <View style={styles.postHeader}>
-          <Image source={{ uri: item.avatar }} style={styles.avatar} />
+          <Image source={fotoAvatar} style={styles.avatar} />
           <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.name}>{item.autor}</Text>
             <Text style={[styles.handle, { color: "#C31E65" }]}>
-              {item.handle}
+              {item.email}
             </Text>
           </View>
-          <Text style={styles.time}>{item.time}</Text>
+          <Text style={styles.time}>{item.tempo}</Text>
         </View>
       );
 
@@ -108,7 +115,7 @@ export default function ForumMother({ navigation }) {
       <View style={styles.postContainer}>
         {postHeader}
 
-        <Text style={styles.message}>{item.message}</Text>
+        <Text style={styles.message}>{item.conteudo}</Text>
 
         {item.image && (
           <TouchableOpacity
@@ -136,16 +143,16 @@ export default function ForumMother({ navigation }) {
         )}
 
         <View style={styles.infoRow}>
-          <Text style={styles.date}>{item.date}</Text>
+          <Text style={styles.date}>{item.data}</Text>
 
           <View style={styles.actions}>
             <TouchableOpacity style={styles.actionButton}>
               <Ionicons name="chatbubble-outline" size={16} color="#888" />
-              <Text style={styles.actionText}>{item.comments}</Text>
+              <Text style={styles.actionText}>{item.comentarios}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton}>
               <Ionicons name="thumbs-up-outline" size={16} color="#888" />
-              <Text style={styles.actionText}>{item.likes}</Text>
+              <Text style={styles.actionText}>{item.curtidas}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -159,7 +166,7 @@ export default function ForumMother({ navigation }) {
       return (
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.navigate("Publication")}
+          onPress={() => navigation.navigate('Publication', { postId: item.id })} key={item.id} 
         >
           {PostContent}
         </TouchableOpacity>
@@ -178,7 +185,7 @@ export default function ForumMother({ navigation }) {
       </View>
 
       <FlatList
-        data={posts}
+        data={postsState}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 80 }}
