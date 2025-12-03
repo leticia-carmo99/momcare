@@ -76,9 +76,9 @@ export default function ForumMother({ navigation }) {
             curtidas: totalCurtidas,
             comentarios: totalComentarios,
             data: data.data,
-            idAutor: data.id_autor || "Usuário",
-            tempo: data.tempo || "5 min",
-            titulo: data.titulo || "Sem descrição",
+            idAutor: data.id_autor ?? "Usuário",
+            tempo: data.tempo ?? "5 min",
+            titulo: data.titulo ?? "Sem descrição",
           };
         })
       );
@@ -161,8 +161,6 @@ export default function ForumMother({ navigation }) {
       </View>
     );
 
-    if (item.id === "1") {
-      
       return (
         <TouchableOpacity
           activeOpacity={0.8}
@@ -171,7 +169,7 @@ export default function ForumMother({ navigation }) {
           {PostContent}
         </TouchableOpacity>
       );
-    }
+    
 
     return PostContent;
   };
