@@ -79,7 +79,11 @@ const EditProfileModal = ({
 );
 
 const customStyles = StyleSheet.create({
-
+modalOverlay: {
+    margin: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalContainer: {
     backgroundColor: "#fff",
     padding: 20,
@@ -119,7 +123,32 @@ const customStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'normal',
     textDecorationLine: 'underline',
-  }
+  },
+  modalCancelButton: {
+    flex: 1,
+    padding: 12,
+    marginRight: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#C31E65",
+    alignItems: "center",
+  },
+  modalCancelButtonText: {
+    color: "#C31E65",
+    fontWeight: "bold",
+  },
+  modalOkButton: {
+    flex: 1,
+    backgroundColor: "#C31E65",
+    padding: 12,
+    marginLeft: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalOkButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
 });
 
 
@@ -513,6 +542,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
+  label: { 
+    fontSize: 14, 
+    fontWeight: 'bold', 
+    marginTop: 10, 
+    marginBottom: 5,
+    color: '#333',
+},
+input: { 
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    padding: 10, 
+    borderRadius: 8,
+    fontSize: 14,
+    backgroundColor: '#fff',
+},
+modalScroll: { 
+    maxHeight: '75%',
+    paddingHorizontal: 10, 
+},
 });
 
 

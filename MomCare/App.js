@@ -71,6 +71,7 @@ function ProfessionalStack() {
         <Stack.Screen name="AddArticle" component={AddArticleScreen} />
         <Stack.Screen name="Article" component={ArticleScreen} />
         <Stack.Screen name="Create" component={CreateProfessional} />
+        <Stack.Screen name="RecentArticles" component={RecentArticlesScreen} />
         </Stack.Navigator>
     </ProfessionalProvider>
   );
@@ -82,7 +83,6 @@ function CommonStack() {
          <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Publication" component={PublicationScreen} />
         <Stack.Screen name="User" component={UserScreen} />
-        <Stack.Screen name="RecentArticles" component={RecentArticlesScreen} />
         <Stack.Screen name="VisibleProfile" component={VisibleProfileScreen} />
     </Stack.Navigator>
   );
