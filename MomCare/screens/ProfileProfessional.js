@@ -1,9 +1,221 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavProfessional";
+import { useProfessional } from "../providers/ProfessionalContext";
+import {
+  doc,
+  updateDoc,
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  deleteDoc, 
+} from "firebase/firestore";
+import { db } from "../firebaseConfig";
+import Modal from "react-native-modal";
+
+const EditProfileModal = ({ 
+  isVisible, 
+  onCancel, 
+  onSave, 
+  loading, 
+  name, setName, 
+  crm, setCrm, 
+  specialty, setSpecialty, 
+  phone, setPhone, 
+  address, setAddress 
+}) => (
+  <Modal 
+    isVisible={isVisible}
+    onBackdropPress={onCancel} 
+    style={customStyles.modalOverlay} 
+    animationIn="slideInUp"
+    animationOut="slideOutDown"
+  >
+    <View style={customStyles.modalContainer}>
+      <TouchableOpacity onPress={onCancel} style={customStyles.modalCloseButton}>
+        <Ionicons name="close-circle-outline" size={30} color="#C31E65" />
+      </TouchableOpacity>
+
+      <Text style={customStyles.modalTitle}>Editar Perfil</Text>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
+        <Text style={styles.label}>Nome Completo</Text>
+        <TextInput style={styles.input} value={name} onChangeText={setName} /> 
+
+        <Text style={styles.label}>Especialidade</Text>
+        <TextInput style={styles.input} value={specialty} onChangeText={setSpecialty} placeholder="Ex: Pediatra" />
+
+        <Text style={styles.label}>CRM (com estado)</Text>
+        <TextInput style={styles.input} value={crm} onChangeText={setCrm} placeholder="Ex: 12345-SP" />
+
+        <Text style={styles.label}>Telefone</Text>
+        <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+
+        <Text style={styles.label}>Cidade/Estado</Text>
+        <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ex: São Paulo, SP" />
+      </ScrollView>
+      <View style={{ 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        width: '100%', 
+        paddingHorizontal: 10, 
+        paddingTop: 10
+      }}>
+        <TouchableOpacity onPress={onCancel} style={customStyles.modalCancelButton}>
+          <Text style={customStyles.modalCancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onSave} style={customStyles.modalOkButton} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={customStyles.modalOkButtonText}>Salvar</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
+);
+
+const customStyles = StyleSheet.create({
+
+  modalContainer: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#C31E65",
+    marginBottom: 12,
+  },
+  modalInput: {
+    borderBottomWidth: 1,
+    borderColor: "#C31E65",
+    marginBottom: 10,
+    paddingVertical: 6,
+    fontSize: 14,
+  },
+  modalButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between", 
+    marginTop: 15,
+  },
+  modalCancelText: {
+    color: "#888",
+    fontSize: 14,
+  },
+  modalSaveText: {
+    color: "#C31E65",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  
+  modalRemoveText: {
+    color: '#C31E65',
+    fontSize: 14,
+    fontWeight: 'normal',
+    textDecorationLine: 'underline',
+  }
+});
+
 
 export default function ProfileProfessional({ navigation }) {
+  const { professionalData, updateProfessional } = useProfessional();
+    const [name, setName] = useState("");
+    const [isEditing, setIsEditing] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [crm, setCrm] = useState("");
+    const [specialty, setSpecialty] = useState("");
+    const [phone, setPhone] = useState("");
+    const [address, setAddress] = useState("");
+
+    const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertConfirmAction, setAlertConfirmAction] = useState(() => () => {});
+  const [alertCancelAction, setAlertCancelAction] = useState(null);
+  const [alertConfirmText, setAlertConfirmText] = useState("OK");
+  const [alertCancelText, setAlertCancelText] = useState("Cancelar");
+
+useEffect(() => {
+    if (professionalData) {
+      setName(professionalData.name || "");
+      setCrm(professionalData.crm || "");
+      setSpecialty(professionalData.especialidade || "Especialista");
+      setPhone(professionalData.telefone || "");
+      setAddress(professionalData.endereco || "São Paulo, SP");
+    }
+  }, [professionalData]);
+
+      const showCustomAlert = useCallback((title, message, onConfirm, onCancel = null, confirmText = "OK", cancelText = "Cancelar") => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertConfirmAction(() => () => {
+          setAlertVisible(false);
+          onConfirm && onConfirm();
+        });
+        setAlertCancelAction(onCancel ? () => () => {
+          setAlertVisible(false);
+          onCancel();
+        } : null);
+        setAlertConfirmText(confirmText);
+        setAlertCancelText(cancelText);
+        setAlertVisible(true);
+      }, []);
+
+      async function saveName() {
+        if (!name.trim()) {
+          Alert.alert("Erro", "O nome não pode ser vazio.");
+          return;
+        }
+    
+        setLoading(true);
+        try {
+          const userDocRef = doc(db, "profissionais", professionalData.id);
+          await updateDoc(userDocRef, { name: name.trim() });
+    
+          showCustomAlert("Sucesso!", "Seu nome foi atualizado com sucesso!", () => {});
+          setIsEditing(false);
+          updateProfessional({ name: name.trim() });
+        } 
+        catch (error) {
+          console.error("Erro ao atualizar nome:", error);
+          Alert.alert(
+            "Erro",
+            "Não foi possível atualizar o nome. Tente novamente mais tarde."
+          );
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function handleSaveProfile() {
+    setLoading(true);
+    try {
+      const updates = {
+        name: name.trim(),
+        crm: crm.trim(),
+        especialidade: specialty.trim(),
+        telefone: phone.trim(),
+        endereco: address.trim(),
+      };
+
+      const userDocRef = doc(db, "profissionais", professionalData.id);
+      await updateDoc(userDocRef, updates);
+      updateProfessional(updates);
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Erro ao atualizar:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -13,7 +225,7 @@ export default function ProfileProfessional({ navigation }) {
             <Text style={styles.topTitle}>Meu Perfil</Text>
             <Text style={styles.topSubtitle}>Gerencie suas informações</Text>
           </View>
-          <TouchableOpacity style={styles.editButton}>
+          <TouchableOpacity style={styles.editButton} onPress={() => setModalVisible(true)}>
             <Text style={styles.editButtonText}>Editar</Text>
           </TouchableOpacity>
         </View>
@@ -24,11 +236,46 @@ export default function ProfileProfessional({ navigation }) {
               source={require("../assets/fotoperfil.png")}
               style={styles.profileImage}
             />
+          
             <View style={styles.profileInfo}>
-              <Text style={styles.name}>Natália dos Santos</Text>
-              <Text style={styles.subInfo}>Pediatra - CRM 12345-SP</Text>
+              <View style={{ flexDirection: "row" }}>
+            {isEditing ? (
+              <>
+                <TextInput
+                  style={styles.nameInput}
+                  value={name}
+                  onChangeText={setName}
+                  autoFocus
+                  editable={!loading}
+                  onSubmitEditing={saveName}
+                  returnKeyType="done"
+                />
+                {loading ? (
+                  <ActivityIndicator size="small" color="#C31E65" style={{ marginLeft: 10 }} />
+                ) : (
+                  <TouchableOpacity onPress={saveName} style={{ marginLeft: 10 }}>
+                    <Ionicons name="checkmark" size={24} color="#C31E65" />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={() => {
+                  setIsEditing(false);
+                  setName(professionalData.name || "");
+                }} style={{ marginLeft: 10 }}>
+                  <Ionicons name="close" size={24} color="#C31E65" />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={styles.name}>{name || "Insira seu nome"}</Text>
+                <TouchableOpacity onPress={() => setIsEditing(true)} style={{ marginLeft: 8 }}>
+                  <Ionicons name="pencil" size={20} color="#C31E65" />
+                </TouchableOpacity>
+              </>
+            )}
+            </View>
+              <Text style={styles.subInfo}>{professionalData.profissao || "Profissão"} - CRM: {professionalData.crm || "---"}</Text>
               <View style={styles.specialtyBadge}>
-                <Text style={styles.specialtyText}>Neonatologia</Text>
+                <Text style={styles.specialtyText}>{professionalData.especialidade || "Especialidade"}</Text>
               </View>
             </View>
           </View>
@@ -36,15 +283,15 @@ export default function ProfileProfessional({ navigation }) {
           <View style={styles.contactInfo}>
             <View style={styles.contactRow}>
               <Ionicons name="mail-outline" size={16} color="#666" style={styles.icon} />
-              <Text style={styles.contactText}>dranat.santos@gmail.com</Text>
+              <Text style={styles.contactText}>{professionalData.email}</Text>
             </View>
             <View style={styles.contactRow}>
               <Ionicons name="call-outline" size={16} color="#666" style={styles.icon} />
-              <Text style={styles.contactText}>(11) 96276-7256</Text>
+              <Text style={styles.contactText}>{professionalData.telefone || "Telefone não informado"}</Text>
             </View>
             <View style={styles.contactRow}>
               <Ionicons name="location-outline" size={16} color="#666" style={styles.icon} />
-              <Text style={styles.contactText}>São Paulo, SP</Text>
+              <Text style={styles.contactText}>{professionalData.endereco || "Endereço não informado"}</Text>
             </View>
           </View>
         </View>
@@ -74,6 +321,29 @@ export default function ProfileProfessional({ navigation }) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+
+        <EditProfileModal
+        isVisible={modalVisible}
+        loading={loading}
+        onCancel={() => setModalVisible(false)}
+        onSave={handleSaveProfile}
+        name={name}
+        setName={setName}
+        crm={crm}
+        setCrm={setCrm}
+        specialty={specialty}
+        setSpecialty={setSpecialty}
+        phone={phone}
+        setPhone={setPhone}
+        address={address}
+        setAddress={setAddress}
+        title={alertTitle}
+        message={alertMessage}
+        onConfirm={alertConfirmAction}
+        confirmText={alertConfirmText}
+        cancelText={alertCancelText}
+      />
 
       <BottomNav navigation={navigation} activeScreen="ProfileProfessional" />
     </View>

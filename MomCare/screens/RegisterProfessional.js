@@ -7,7 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import Textura from '../assets/textura.png';
 
 import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebaseConfig";  
+import { db } from "../firebaseConfig"; 
+
+import { useProfessional } from "../providers/ProfessionalContext";
 
 export default function RegisterProfessional({ navigation }) {
   const [username, setUsername] = useState("");
@@ -23,6 +25,8 @@ export default function RegisterProfessional({ navigation }) {
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [modalOnConfirm, setModalOnConfirm] = useState(null);
+
+  const { signup } = useProfessional();
 
   const showModal = (title, message, onConfirm = null) => {
     setModalTitle(title);
@@ -83,7 +87,7 @@ export default function RegisterProfessional({ navigation }) {
     }
   };
 
-  const handleRegister = async () => {
+const handleRegister = async () => {
     if (loading) return;
 
     const cleanUsername = username.startsWith('@') ? username.slice(1) : username;
@@ -119,37 +123,36 @@ export default function RegisterProfessional({ navigation }) {
     }
 
     setLoading(true);
-    try {
-      const usernameExists = await checkUsernameExists(cleanUsername);
-      if (usernameExists) {
-        showModal("Erro", "Este nome de usuário já está em uso.");
+        try {
+            const dados = {
+                username: cleanUsername,
+                email: email.trim().toLowerCase(),
+                cpf: cpf.replace(/[^\d]+/g,''),
+                senha: password,
+            };
+
+            if (await checkUsernameExists(cleanUsername)) {
+              showModal("Erro", "Este nome de usuário já está em uso.");
+              setLoading(false);
+              return;
+            }
+
+            if (await checkEmailExists(email.trim().toLowerCase())) {
+              showModal("Erro", "Este e-mail já está cadastrado.");
+              setLoading(false);
+              return;
+            }
+
+            const user = await signup(dados); 
+            showModal("Sucesso", "Cadastro realizado com sucesso!", () => {
+                navigation.navigate("HomeProfessional"); 
+            });
+
+        } catch (error) {
+            showModal("Erro", error.message || "Erro ao cadastrar. Tente novamente.");
+        }
         setLoading(false);
-        return;
-      }
-
-      const emailExists = await checkEmailExists(email.trim().toLowerCase());
-      if (emailExists) {
-        showModal("Erro", "Este e-mail já está cadastrado.");
-        setLoading(false);
-        return;
-      }
-
-      const dados = {
-        username: cleanUsername,
-        email: email.trim().toLowerCase(),
-        cpf: cpf.replace(/[^\d]+/g,''),
-        senha: password,
-      };
-
-      await addDoc(collection(db, "profissionais"), dados);
-
-      showModal("Sucesso", "Cadastro realizado com sucesso!", () => navigation.navigate("HomeProfessional"));
-    } catch (error) {
-      console.error("Erro ao cadastrar:", error);
-      showModal("Erro", "Erro ao cadastrar. Tente novamente.");
-    }
-    setLoading(false);
-  };
+    };
 
   return (
     <>

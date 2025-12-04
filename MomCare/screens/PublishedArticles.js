@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
-import { doc, getDoc, getDocs, collection, where } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, where, orderBy } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
 const categories = [
@@ -71,6 +71,7 @@ useEffect(() => {
             likes: data.curtidas?.length || 0,
             views: data.views || 0,
             image: data.image || null,
+            createdAt: data.data_criacao ? data.data_criacao.toDate() : new Date(0), 
           };
         })
       );
@@ -84,6 +85,48 @@ useEffect(() => {
   loadArticles();
 }, []);
 
+const getFilteredAndSortedArticles = () => {
+    let result = [...articles];
+    if (searchText.trim()) {
+      const text = searchText.toLowerCase();
+      result = result.filter((article) => {
+        return (
+          article.title.toLowerCase().includes(text) ||
+          (article.subtitle && article.subtitle.toLowerCase().includes(text))
+        );
+      });
+    }
+
+    if (selectedCategory !== "all") {
+      const categoryObj = categories.find((c) => c.id === selectedCategory);
+      if (categoryObj) {
+        result = result.filter((article) =>
+          article.tags.some(
+            (tag) => tag.toLowerCase() === categoryObj.label.toLowerCase()
+          )
+        );
+      }
+    }
+
+    
+    switch (selectedFilter) {
+      case "popular":
+        result.sort((a, b) => b.views - a.views);
+        break;
+
+      case "liked":
+        result.sort((a, b) => b.likes - a.likes);
+        break;
+
+      case "recent":
+      default:
+        result.sort((a, b) => b.createdAt - a.createdAt);
+        break;
+    }
+
+    return result;
+  };
+  const finalArticlesList = getFilteredAndSortedArticles();
 
 
   const renderCategoryGrid = () => (
@@ -131,16 +174,16 @@ useEffect(() => {
 
   const renderArticleCard = ({ item }) => (
     <View style={styles.articleCard}>
-      <View style={styles.articleImagePlaceholder} />
-      <Text style={styles.articleTitle}>{item.title}</Text>
-      <Text style={styles.articleSubtitle}>{item.subtitle}</Text>
-
-      <View style={styles.authorSection}>
-        {item.image ? (
+              {item.image ? (
   <Image source={{ uri: item.image }} style={styles.articleImagePlaceholder} />
 ) : (
   <View style={styles.articleImagePlaceholder} />
 )}
+      <Text style={styles.articleTitle}>{item.title}</Text>
+      <Text style={styles.articleSubtitle}>{item.subtitle}</Text>
+
+      <View style={styles.authorSection}>
+
 
         <View>
           <Text style={styles.authorName}>{item.author}</Text>
@@ -247,11 +290,17 @@ useEffect(() => {
       {renderCategoryGrid()}
 
       <Text style={styles.recommendedTitle}>Artigos recomendados</Text>
-      {articles.length > 0 ? (
-  articles.map(item => renderArticleCard({ item }))
-) : (
-  <Text style={{ textAlign: "center", color: "#666" }}>Carregando artigos...</Text>
-)}
+        {articles.length > 0 ? (
+          finalArticlesList.length > 0 ? (
+            finalArticlesList.map((item) => <React.Fragment key={item.id}>{renderArticleCard({ item })}</React.Fragment>)
+          ) : (
+            <Text style={{ textAlign: "center", marginTop: 20, color: "#999" }}>
+              Nenhum artigo encontrado com estes filtros.
+            </Text>
+          )
+        ) : (
+          <Text style={{ textAlign: "center", color: "#666" }}>Carregando artigos...</Text>
+        )}
 
 
       <View style={{ height: 60 }} />

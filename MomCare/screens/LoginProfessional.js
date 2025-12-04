@@ -9,7 +9,11 @@ import Textura from '../assets/textura.png';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from "../firebaseConfig";
 
+import { useProfessional } from "../providers/ProfessionalContext";
+
 export default function LoginProfessional({ navigation }) {
+
+  const { login } = useProfessional();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,50 +31,28 @@ export default function LoginProfessional({ navigation }) {
     setModalVisible(true);
   };
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      showModal("Erro", "Por favor, preencha todos os campos.");
-      return;
-    }
+const handleLogin = async () => {
+  if (!email || !password) {
+    showModal("Erro", "Por favor, preencha todos os campos.");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      const emailQuery = query(
-        collection(db, "profissionais"),
-        where("email", "==", email.trim().toLowerCase())
-      );
-      const querySnapshot = await getDocs(emailQuery);
+  setLoading(true);
 
-      if (querySnapshot.empty) {
-        showModal("Erro", "E-mail não cadastrado.");
-        setLoading(false);
-        return;
-      }
+  try {
+    const result = await login(email.trim().toLowerCase(), password);
 
-      let userFound = null;
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.senha === password) {
-          userFound = data;
-        }
-      });
+    showModal("Bem-vinda!", "Login realizado com sucesso!", () => {
+      setModalVisible(false);
+      navigation.navigate("HomeProfessional");
+    });
 
-      if (!userFound) {
-        showModal("Erro", "Senha incorreta.");
-        setLoading(false);
-        return;
-      }
+  } catch (err) {
+    showModal("Erro", err.message || "Erro ao fazer login.");
+  }
 
-      showModal("Bem-vinda!", "Login realizado com sucesso!", () => {
-        navigation.navigate("HomeProfessional");
-      });
-
-    } catch (error) {
-      console.error("Erro ao fazer login:", error);
-      showModal("Erro", "Erro ao fazer login. Tente novamente.");
-    }
-    setLoading(false);
-  };
+  setLoading(false);
+};
 
   return (
     <>

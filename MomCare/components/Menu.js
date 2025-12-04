@@ -2,15 +2,17 @@ import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import fotoperfil from "../assets/fotoperfil.png"; 
+import { useMother } from "../providers/MotherContext";
 
-export default function Menu({ navigation, user }) {
+export default function Menu({ navigation }) {
+  const { motherData } = useMother();
   return (
     <View style={styles.container}>
       <View style={styles.profileSection}>
         <Image source={fotoperfil} style={styles.avatar} />
         <View>
-          <Text style={styles.name}>{user?.name || "Usuário"}</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("ProfileMother", { user })}>
+          <Text style={styles.name}>{motherData?.name || "Usuário"}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("ProfileMother")}>
             <Text style={styles.viewProfile}>Ver perfil</Text>
           </TouchableOpacity>
         </View>
