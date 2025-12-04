@@ -1,6 +1,8 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
+import { doc, getDoc, getDocs, collection, where } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 const categories = [
   { id: "all", label: "Todos", icon: "book-open-outline", count: 156 },
@@ -11,32 +13,78 @@ const categories = [
   { id: "health", label: "Saúde", icon: "heart-pulse", count: 12 },
 ];
 
-const articles = [
-  {
-    id: "1",
-    title: "Rotina de sono: como estabelecer bons hábitos",
-    subtitle: "Dicas práticas para uma noite tranquila para toda a família",
-    author: "Dra. Natália dos Santos",
-    role: "Pediatra",
-    tags: ["Rotina", "Sono", "0-6 meses"],
-    readingTime: "6 minutos",
-    postedAgo: "4 dias",
-    likes: 533,
-    views: 1321,
-    image: null,
-  },
-];
 
 export default function PublishedArticles({ navigation }) {
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedFilter, setSelectedFilter] = useState("recent");
+  const [articles, setArticles] = useState([]);
 
   const filterButtons = [
     { id: "recent", label: "Mais recentes" },
     { id: "popular", label: "Mais populares" },
     { id: "liked", label: "Mais curtidas" },
   ];
+
+useEffect(() => {
+  async function loadArticles() {
+    try {
+      const snap = await getDocs(collection(db, "artigos"));
+
+      const list = await Promise.all(
+        snap.docs.map(async (docItem) => {
+          const data = docItem.data();
+
+          let autorData = {
+            nome: data.autor || "Desconhecido",
+            profissao: data.profissao || "Profissional",
+            avatar: null,
+          };
+          if (data.id_autor) {
+            try {
+              const profRef = doc(db, "profissional", data.id_autor);
+              const profSnap = await getDoc(profRef);
+
+              if (profSnap.exists()) {
+                const prof = profSnap.data();
+                autorData = {
+                  nome: prof.nome,
+                  profissao: prof.profissao,
+                  avatar: prof.avatar || null,
+                };
+              }
+            } catch (e) {
+              console.log("Erro ao buscar profissional:", e);
+            }
+          }
+
+          return {
+            id: docItem.id,
+            title: data.titulo,
+            subtitle: data.subtitulo,
+            author: autorData.nome,
+            role: autorData.profissao,
+            avatar: autorData.avatar,
+            tags: data.tags || [],
+            readingTime: data.tempo,
+            postedAgo: data.postadoTempo,
+            likes: data.curtidas?.length || 0,
+            views: data.views || 0,
+            image: data.image || null,
+          };
+        })
+      );
+
+      setArticles(list);
+    } catch (err) {
+      console.log("Erro ao carregar artigos:", err);
+    }
+  }
+
+  loadArticles();
+}, []);
+
+
 
   const renderCategoryGrid = () => (
     <View style={styles.categoriesGrid}>
@@ -88,7 +136,12 @@ export default function PublishedArticles({ navigation }) {
       <Text style={styles.articleSubtitle}>{item.subtitle}</Text>
 
       <View style={styles.authorSection}>
-        <View style={styles.avatarPlaceholder} />
+        {item.image ? (
+  <Image source={{ uri: item.image }} style={styles.articleImagePlaceholder} />
+) : (
+  <View style={styles.articleImagePlaceholder} />
+)}
+
         <View>
           <Text style={styles.authorName}>{item.author}</Text>
           <Text style={styles.authorRole}>{item.role}</Text>
@@ -194,7 +247,12 @@ export default function PublishedArticles({ navigation }) {
       {renderCategoryGrid()}
 
       <Text style={styles.recommendedTitle}>Artigos recomendados</Text>
-      {articles.map((item) => renderArticleCard({ item }))}
+      {articles.length > 0 ? (
+  articles.map(item => renderArticleCard({ item }))
+) : (
+  <Text style={{ textAlign: "center", color: "#666" }}>Carregando artigos...</Text>
+)}
+
 
       <View style={{ height: 60 }} />
     </ScrollView>

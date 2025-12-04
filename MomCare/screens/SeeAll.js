@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, SafeAreaView, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useMother } from "../providers/MotherContext";
+import { db } from "../firebaseConfig";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 
 LocaleConfig.locales['pt-br'] = {
   monthNames: [
@@ -18,6 +20,8 @@ LocaleConfig.locales['pt-br'] = {
 LocaleConfig.defaultLocale = 'pt-br';
 
 export default function SeeAll() {
+  const { motherId } = useMother();
+
   const today = new Date();
   const todayStr = today.getFullYear() + '-' +
     String(today.getMonth() + 1).padStart(2, '0') + '-' +
@@ -25,12 +29,31 @@ export default function SeeAll() {
 
   const [selectedDate, setSelectedDate] = useState(todayStr);
 
-  const diarioEntries = [
-    { text: "Um dia complicado para mim e a Elena", date: "27/05/2025", mood: "Triste" },
-    { text: "Hoje nos divertimos muito no parque!", date: "26/05/2025", mood: "Feliz" },
-    { text: "Elena ficou doente hoje e foi um dia bem difícil", date: "22/05/2025", mood: "Doente" },
-    { text: "Tive uma briga com o pai da Elena de novo", date: "17/05/2025", mood: "Com raiva" },
-  ];
+  const [entries, setEntries] = useState([]);
+
+    useEffect(() => {
+    if (!motherId) return;
+
+    const load = async () => {
+      const q = query(
+        collection(db, "diario"),
+        where("userId", "==", motherId),
+        orderBy("createdAt", "desc")
+      );
+
+      const snap = await getDocs(q);
+
+      const list = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      setEntries(list);
+    };
+
+    load();
+  }, [motherId]);
+
 
   const CustomDay = ({ date, state }) => {
     const isToday = date.dateString === todayStr;
@@ -95,7 +118,7 @@ export default function SeeAll() {
 
           <View style={styles.entriesContainer}>
             <View style={styles.entriesRow}>
-              {diarioEntries.map((entry, index) => (
+              {entries.map((entry, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.entryCard}
@@ -109,7 +132,7 @@ export default function SeeAll() {
                       <MoodIcon mood={entry.mood} />
                       <Text style={styles.entryMood}>{entry.mood}</Text>
                     </View>
-                    <Text style={styles.entryDate}>{entry.date}</Text>
+                    <Text style={styles.entryDate}>{entry.createdAt?.toDate().toLocaleDateString("pt-BR")}</Text>
                   </View>
                 </TouchableOpacity>
               ))}

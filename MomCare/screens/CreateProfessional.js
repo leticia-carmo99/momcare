@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { db } from "../firebaseConfig";
+import { collection, query, where, getDocs, orderBy, updateDoc, doc } from "firebase/firestore";
+
+
 
 LocaleConfig.locales['pt-br'] = {
   monthNames: [
@@ -16,7 +20,7 @@ LocaleConfig.locales['pt-br'] = {
 };
 LocaleConfig.defaultLocale = 'pt-br';
 
-export default function Create() {
+export default function CreateProfessional() {
   const navigation = useNavigation();
 
   const today = new Date();

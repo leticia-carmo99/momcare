@@ -1,74 +1,94 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import BottomNav from "../components/BottomNavMother";
 import { Ionicons } from "@expo/vector-icons";
 import { useMother } from "../providers/MotherContext";
+import { db } from "../firebaseConfig";
+import { collection, query, where, getDocs, orderBy, updateDoc, doc } from "firebase/firestore";
+
+
 
 export default function TasksMother({ navigation }) {
-  const { user } = useMother();
-  const [selectedDay, setSelectedDay] = useState("21"); 
-  const [tarefas, setTarefas] = useState([
-    {
-      time: "8:00 - 8:30",
-      title: "Yoga",
-      description: "Fazer meu yoga matinal",
-      done: false,
-      date: "21", 
-    },
-    {
-      time: "8:30 - 9:00",
-      title: "Mamadeira",
-      description: "Fazer e dar a mamadeira pra Elena",
-      done: false,
-      date: "21", 
-    },
-    {
-      time: "9:10 - 10:00",
-      title: "Ler",
-      description: "Ler sobre mães de primeira viagem",
-      done: false,
-      date: "21", 
-    },
-    {
-      time: "11:00 - 12:00",
-      title: "Almoço",
-      description: "Preparar almoço",
-      done: false,
-      date: "21", 
-    },
-    {
-      time: "13:00 - 15:00",
-      title: "Passeio",
-      description: "Passear no parque com a Elena",
-      done: false,
-      date: "21", 
-    },
-    {
-      time: "16:00 - 16:30",
-      title: "Banho",
-      description: "Dar banho na Elena",
-      done: false,
-      date: "21", 
-    },
-  ]);
+  const { motherId } = useMother();
+  const hoje = new Date();
+const [selectedDay, setSelectedDay] = useState(
+  hoje.toISOString().split("T")[0]
+);
+  const [tarefas, setTarefas] = useState([]);
 
-  const dias = [
-    { date: "21", weekday: "Segunda" },
-    { date: "22", weekday: "Terça" },
-    { date: "23", weekday: "Quarta" },
-    { date: "24", weekday: "Quinta" },
-    { date: "25", weekday: "Sexta" },
-    { date: "26", weekday: "Sábado" },
-    { date: "27", weekday: "Domingo" },
-  ];
+useEffect(() => {
+  if (!motherId) return;
 
-  function toggleDone(index) {
-    const newTarefas = [...tarefas];
-    newTarefas[index].done = !newTarefas[index].done;
-    setTarefas(newTarefas);
+  async function loadTarefas() {
+    try {
+      const q = query(
+        collection(db, "tarefas"),
+        where("userId", "==", motherId),
+        orderBy("createdAt", "asc")
+      );
+
+      const snap = await getDocs(q);
+
+      const list = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      setTarefas(list);
+
+    } catch (error) {
+      console.log("Erro ao carregar tarefas:", error);
+    }
   }
 
-  const tarefasDoDia = tarefas.filter((task) => task.date === selectedDay);
+  loadTarefas();
+}, [motherId]);
+
+async function toggleDone(task) {
+  try {
+    const ref = doc(db, "tarefas", task.id);
+    await updateDoc(ref, { done: !task.done });
+    setTarefas(prev =>
+      prev.map(t => (t.id === task.id ? { ...t, done: !t.done } : t))
+    );
+
+  } catch (error) {
+    console.log("Erro ao atualizar tarefa:", error);
+  }
+}
+
+
+
+  const dias = Array.from({ length: 7 }).map((_, i) => {
+    const date = new Date(hoje);
+    date.setDate(hoje.getDate() - 3 + i);
+
+    return {
+      dateNumber: String(date.getDate()).padStart(2, "0"),
+      weekday: date.toLocaleDateString("pt-BR", { weekday: "long" }),
+      fullDate: date.toISOString().split("T")[0], 
+    };
+  });
+
+
+ const diaSelecionado = dias.find(d => d.fullDate === selectedDay);
+
+  const tarefasDoDia = diaSelecionado
+    ? tarefas.filter(task => task?.date === diaSelecionado.fullDate)
+    : [];
+
+function formatarDataHeader(selectedDay) {
+  const dayObj = dias.find(d => d.dateNumber === selectedDay);
+  if (!dayObj) return "";
+
+  const date = new Date(dayObj.fullDate);
+  const dia = String(date.getDate());
+  const mes = date.toLocaleString("pt-BR", { month: "long" });
+
+  return `${dia} de ${mes}`;
+}
+
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -80,13 +100,7 @@ export default function TasksMother({ navigation }) {
           </View>
           <View style={styles.centerHeader}>
             <Text style={styles.headerDateCenter}>
-              {selectedDay === "21" && "21 de julho"}
-              {selectedDay === "22" && "22 de julho"}
-              {selectedDay === "23" && "23 de julho"}
-              {selectedDay === "24" && "24 de julho"}
-              {selectedDay === "25" && "25 de julho"}
-              {selectedDay === "26" && "26 de julho"}
-              {selectedDay === "27" && "27 de julho"}
+              {formatarDataHeader(selectedDay)}
             </Text>
           </View>
           <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("Create")}>
@@ -101,13 +115,15 @@ export default function TasksMother({ navigation }) {
             contentContainerStyle={styles.daysContainer}
           >
             {dias.map((dia, index) => {
-              const isActive = dia.date === selectedDay;
+              const isActive = dia.fullDate === selectedDay;
+
               return (
                 <TouchableOpacity
                   key={index}
                   style={[styles.dayButton, isActive && styles.dayButtonActive]}
                   activeOpacity={0.8}
-                  onPress={() => setSelectedDay(dia.date)} 
+                  onPress={() => setSelectedDay(dia.fullDate)}
+
                 >
                   <Text style={[styles.dayDate, isActive && styles.dayDateActive]}>
                     {dia.date}
@@ -137,7 +153,7 @@ export default function TasksMother({ navigation }) {
                     key={index}
                     style={[styles.taskCard, isDone && styles.taskCardDone]}
                     activeOpacity={0.8}
-                    onPress={() => toggleDone(index)}
+                    onPress={() => toggleDone(task)}
                   >
                     <View style={styles.taskInfo}>
                       <View style={styles.taskTimeContainer}>

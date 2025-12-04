@@ -10,7 +10,8 @@ import TasksMotherScreen from "./screens/TasksMother";
 import ForumMotherScreen from "./screens/ForumMother";
 import ProfileMotherScreen from "./screens/ProfileMother";
 import ArticleScreen from "./screens/Article";
-import CreateScreen from "./screens/Create";
+import CreateMother from "./screens/CreateMother";
+import CreateProfessional from "./screens/CreateProfessional";
 import CommentScreen from "./screens/Comment";
 import NewCommentScreen from "./screens/NewComment";
 import PublicationScreen from "./screens/Publication";
@@ -49,6 +50,8 @@ function MotherStack() {
         <Stack.Screen name="Comment" component={CommentScreen} />
         <Stack.Screen name="NewComment" component={NewCommentScreen} />
         <Stack.Screen name="SeeAll" component={SeeAllScreen} />
+        <Stack.Screen name="Create" component={CreateMother} />
+        <Stack.Screen name="PublishedArticles" component={PublishedArticlesScreen} />
         </Stack.Navigator>
     </MotherProvider>
   );
@@ -67,6 +70,7 @@ function ProfessionalStack() {
         <Stack.Screen name="ProfileProfessional" component={ProfileProfessionalScreen} />
         <Stack.Screen name="AddArticle" component={AddArticleScreen} />
         <Stack.Screen name="Article" component={ArticleScreen} />
+        <Stack.Screen name="Create" component={CreateProfessional} />
         </Stack.Navigator>
     </ProfessionalProvider>
   );
@@ -76,12 +80,10 @@ function CommonStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false}} >
          <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="Create" component={CreateScreen} />
         <Stack.Screen name="Publication" component={PublicationScreen} />
         <Stack.Screen name="User" component={UserScreen} />
         <Stack.Screen name="RecentArticles" component={RecentArticlesScreen} />
         <Stack.Screen name="VisibleProfile" component={VisibleProfileScreen} />
-        <Stack.Screen name="PublishedArticles" component={PublishedArticlesScreen} />
     </Stack.Navigator>
   );
 }
