@@ -27,6 +27,8 @@ import { db } from "../firebaseConfig";
 import Modal from "react-native-modal";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
+import { useMother } from "../providers/MotherContext";
+
 const CustomAlertModal = ({ isVisible, title, message, onConfirm, onCancel, confirmText = "OK", cancelText }) => (
   <Modal 
     isVisible={isVisible}
@@ -128,7 +130,9 @@ const customStyles = StyleSheet.create({
 });
 
 export default function ProfileMotherScreen({ navigation, route }) {
-  const user = route?.params?.user;
+const { motherData, updateMother } = useMother();
+
+
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -158,12 +162,12 @@ export default function ProfileMotherScreen({ navigation, route }) {
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
 
   useEffect(() => {
-    if (user?.name) {
-      setName(user.name);
+  if (motherData?.name) {
+  setName(motherData.name);
     } else {
       setName("");
     }
-  }, [user]);
+  }, [motherData]);
 
   const showCustomAlert = useCallback((title, message, onConfirm, onCancel = null, confirmText = "OK", cancelText = "Cancelar") => {
     setAlertTitle(title);
@@ -183,9 +187,10 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
   const fetchBabies = useCallback(async () => {
     try {
-      if (!user?.id) return;
+      if (!motherData?.id) return;
 
-      const q = query(collection(db, "bebes"), where("userId", "==", user.id));
+      const q = query(collection(db, "bebes"), where("userId", "==", motherData.id));
+
       const snapshot = await getDocs(q);
 
       if (!snapshot.empty) {
@@ -205,15 +210,15 @@ export default function ProfileMotherScreen({ navigation, route }) {
     } catch (err) {
       console.error("Erro ao buscar bebê:", err);
     }
-  }, [user]);
+  }, [motherData]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (motherData?.id) {
       fetchBabies();
     }
-  }, [user, fetchBabies]);
+  }, [motherData, fetchBabies]);
 
-  if (!user) {
+  if (!motherData) {
     return (
       <View style={styles.container}>
         <Text
@@ -238,13 +243,14 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
     setLoading(true);
     try {
-      const userDocRef = doc(db, "maes", user.id);
+      const userDocRef = doc(db, "maes", motherData.id);
       await updateDoc(userDocRef, { name: name.trim() });
 
       showCustomAlert("Sucesso!", "Seu nome foi atualizado com sucesso!", () => {});
       setIsEditing(false);
-      user.name = name.trim();
-    } catch (error) {
+      updateMother({ name: name.trim() });
+    } 
+    catch (error) {
       console.error("Erro ao atualizar nome:", error);
       Alert.alert(
         "Erro",
@@ -302,8 +308,8 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
     try {
       const docRef = await addDoc(collection(db, "bebes"), {
-        userId: user.id,
-        usernameMae: user.username,
+        userId: motherData.id,
+        usernameMae: motherData.username,
         nome: babyName.trim(),
         dataNascimento: babyBirthDate.toISOString(),
         pesoAtual: babyWeight.trim(),
@@ -460,7 +466,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
                 )}
                 <TouchableOpacity onPress={() => {
                   setIsEditing(false);
-                  setName(user.name || "");
+                  setName(motherData.name || "");
                 }} style={{ marginLeft: 10 }}>
                   <Ionicons name="close" size={24} color="#C31E65" />
                 </TouchableOpacity>
@@ -475,7 +481,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
             )}
           </View>
 
-          <Text style={styles.username}>@{user.username}</Text>
+          <Text style={styles.username}>@{motherData.username}</Text>
           <View style={styles.tag}>
             <Text style={styles.tagText}>
               {isFirstTimeMom ? "Mãe de primeira viagem" : "Mamãe experiente"}
@@ -549,7 +555,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
             <Text style={styles.statLabel}>dias como mãe</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{user.articlesRead || 47}</Text>
+            <Text style={styles.statNumber}>{motherData.articlesRead || 47}</Text>
             <Text style={styles.statLabel}>artigos lidos</Text>
           </View>
         </View>
@@ -559,7 +565,8 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
           <TouchableOpacity
             style={styles.actionItem}
-            onPress={() => navigation.navigate("ForumMother", { user })}
+            onPress={() => navigation.navigate("ForumMother", { user: motherData })}
+
           >
             <Ionicons name="people-outline" size={24} color="#555" />
             <Text style={styles.actionText}>Comunidade de mães</Text>
@@ -567,7 +574,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
 
           <TouchableOpacity
             style={styles.actionItem}
-            onPress={() => navigation.navigate("Daily", { user })}
+            onPress={() => navigation.navigate("Daily", { user: motherData })}
           >
             <MaterialCommunityIcons name="notebook-outline" size={24} color="#555" />
             <Text style={styles.actionText}>Diário da mamãe</Text>
@@ -575,7 +582,7 @@ export default function ProfileMotherScreen({ navigation, route }) {
         </View>
       </ScrollView>
 
-      <BottomNav navigation={navigation} activeScreen="ProfileMother" user={user} />
+      <BottomNav navigation={navigation} activeScreen="ProfileMother" user={motherData} />
 
       <Modal isVisible={showModal}>
         <View style={styles.modalContainer}>

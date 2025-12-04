@@ -9,6 +9,8 @@ import Textura from '../assets/textura.png';
 import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebaseConfig";  
 
+import { useMother } from "../providers/MotherContext";
+
 export default function RegisterMother({ navigation }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -23,6 +25,8 @@ export default function RegisterMother({ navigation }) {
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [modalOnConfirm, setModalOnConfirm] = useState(null);
+
+  const { signup } = useMother();
 
   const showModal = (title, message, onConfirm = null) => {
     setModalTitle(title);
@@ -119,38 +123,24 @@ export default function RegisterMother({ navigation }) {
     }
 
     setLoading(true);
-    try {
-      const usernameExists = await checkUsernameExists(cleanUsername);
-      if (usernameExists) {
-        showModal("Erro", "Este nome de usuário já está em uso.");
+        try {
+            const dados = {
+                username: cleanUsername,
+                email: email.trim().toLowerCase(),
+                cpf: cpf.replace(/[^\d]+/g,''),
+                senha: password,
+            };
+
+            const user = await signup(dados); 
+            showModal("Sucesso", "Cadastro realizado com sucesso!", () => {
+                navigation.navigate("MotherRoot", { user }); 
+            });
+
+        } catch (error) {
+            showModal("Erro", error.message || "Erro ao cadastrar. Tente novamente.");
+        }
         setLoading(false);
-        return;
-      }
-
-      const emailExists = await checkEmailExists(email.trim().toLowerCase());
-      if (emailExists) {
-        showModal("Erro", "Este e-mail já está cadastrado.");
-        setLoading(false);
-        return;
-      }
-
-      const dados = {
-        username: cleanUsername,
-        email: email.trim().toLowerCase(),
-        cpf: cpf.replace(/[^\d]+/g,''),
-        senha: password,
-      };
-
-      const docRef = await addDoc(collection(db, "maes"), dados);
-      const user = { ...dados, id: docRef.id };
-
-      showModal("Sucesso", "Cadastro realizado com sucesso!", () => navigation.navigate("MotherRoot", { user }));
-    } catch (error) {
-      console.error("Erro ao cadastrar:", error);
-      showModal("Erro", "Erro ao cadastrar. Tente novamente.");
-    }
-    setLoading(false);
-  };
+    };
 
   return (
     <>

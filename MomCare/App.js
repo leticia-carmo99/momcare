@@ -74,12 +74,12 @@ function ProfessionalStack() {
 function CommonStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false}} >
+         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Create" component={CreateScreen} />
         <Stack.Screen name="Publication" component={PublicationScreen} />
         <Stack.Screen name="SeeAll" component={SeeAllScreen} />
         <Stack.Screen name="User" component={UserScreen} />
         <Stack.Screen name="RecentArticles" component={RecentArticlesScreen} />
-        <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="VisibleProfile" component={VisibleProfileScreen} />
         <Stack.Screen name="PublishedArticles" component={PublishedArticlesScreen} />
     </Stack.Navigator>
@@ -89,7 +89,7 @@ function CommonStack() {
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="CommonStack" screenOptions={{ headerShown: false }}>
 
         <Stack.Screen name="CommonStack" component={CommonStack} />
         <Stack.Screen name="MotherStack" component={MotherStack} />

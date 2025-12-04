@@ -25,14 +25,14 @@ export default function User({ navigation }) {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate("WelcomeMother")}
+            onPress={() => navigation.navigate('MotherStack', { screen: 'WelcomeMother' })}
           >
             <Text style={styles.buttonText}>Mãe</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate("WelcomeProfessional")}
+            onPress={() => navigation.navigate('ProfessionalStack', { screen: 'WelcomeProfessional' })}
           >
             <Text style={styles.buttonText}>Profissional</Text>
           </TouchableOpacity>
