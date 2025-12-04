@@ -22,7 +22,7 @@ export default function BottomNavMother({ navigation, activeScreen, user }) {
 
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => navigation.navigate('Daily', { user })}
+        onPress={() => navigation.navigate('Daily')}
       >
         <Ionicons 
           name={activeScreen === 'Daily' ? "book" : "book-outline"} 
@@ -36,7 +36,7 @@ export default function BottomNavMother({ navigation, activeScreen, user }) {
 
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => navigation.navigate('TasksMother', { user })}
+        onPress={() => navigation.navigate('TasksMother')}
       >
         <Ionicons 
           name="clipboard-outline" 

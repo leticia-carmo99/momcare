@@ -1,10 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, Image, TouchableOpacity, TextInput, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useMother } from "../providers/MotherContext";
+import { db } from "../firebaseConfig";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
 
 export default function NewComment({ navigation }) {
+  const { motherData, motherId } = useMother();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+
+  const saveEntry = async () => {
+await addDoc(collection(db, "diario"), {
+  userId: motherId,
+  title,
+  text: content,
+  mood: "feliz", 
+  date: new Date().toLocaleDateString("pt-BR"),
+  createdAt: Timestamp.now()
+});
+
+
+  navigation.goBack();
+};
 
   const characterCount = content.length;
 
@@ -34,7 +52,7 @@ export default function NewComment({ navigation }) {
               <TouchableOpacity style={styles.iconButton}>
                 <Ionicons name="arrow-redo-outline" size={22} color="#B92572" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmButton}>
+              <TouchableOpacity style={styles.confirmButton} onPress={saveEntry}>
                 <Ionicons name="checkmark" size={28} color="#B92572" />
               </TouchableOpacity>
             </View>
@@ -49,7 +67,7 @@ export default function NewComment({ navigation }) {
           />
 
           <Text style={styles.subtitle}>
-            21 de julho  13:14 - {characterCount} caracteres
+            {new Date().toLocaleDateString("pt-BR")}  • {characterCount} caracteres
           </Text>
 
           <TextInput

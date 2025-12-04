@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import BottomNav from "../components/BottomNavMother";
 import { Ionicons } from "@expo/vector-icons";
+import { useMother } from "../providers/MotherContext";
 
 export default function TasksMother({ navigation }) {
+  const { user } = useMother();
   const [selectedDay, setSelectedDay] = useState("21"); 
   const [tarefas, setTarefas] = useState([
     {

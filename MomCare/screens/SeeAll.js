@@ -3,6 +3,7 @@ import { View, StyleSheet, SafeAreaView, ScrollView, Text, TouchableOpacity } fr
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
+import { useMother } from "../providers/MotherContext";
 
 LocaleConfig.locales['pt-br'] = {
   monthNames: [

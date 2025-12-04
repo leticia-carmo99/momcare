@@ -1,18 +1,39 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 import campoDeFlores from "../assets/campodeflores.png";
 import coracao from "../assets/coracao.png";
+import { useMother } from "../providers/MotherContext";
+import { db } from "../firebaseConfig";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 
 export default function Daily({ navigation }) {
-  const { user } = route.params;
-  const diarioEntries = [
-    { text: "Um dia complicado para mim e a Elena", date: "27/05/2025", mood: "Triste" },
-    { text: "Hoje nos divertimos muito no parque!", date: "26/05/2025", mood: "Feliz" },
-    { text: "Elena ficou doente hoje e foi um dia bem difícil", date: "22/05/2025", mood: "Doente" },
-    { text: "Tive uma briga com o pai da Elena de novo", date: "17/05/2025", mood: "Com raiva" },
-  ];
+ const { motherData, motherId } = useMother();
+  const [entries, setEntries] = useState([]);
+
+  useEffect(() => {
+    if (!motherData) return;
+
+    const fetchEntries = async () => {
+      const q = query(
+        collection(db, "diario"),
+        where("userId", "==", motherId),
+        orderBy("createdAt", "desc")
+      );
+
+      const snapshot = await getDocs(q);
+
+      const list = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setEntries(list);
+    };
+
+    fetchEntries();
+  }, [motherData]);
 
   return (
     <View style={styles.mainContainer}>
@@ -48,7 +69,7 @@ export default function Daily({ navigation }) {
           </View>
 
           <View style={styles.entriesContainer}>
-            {diarioEntries.map((entry, index) => (
+            {entries.map((entry, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.entryCard}

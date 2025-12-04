@@ -8,7 +8,11 @@ import Textura from '../assets/textura.png';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from "../firebaseConfig";
 
+import { useMother } from "../providers/MotherContext";
+
 export default function LoginMother({ navigation }) {
+
+  const { login } = useMother();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,48 +30,31 @@ export default function LoginMother({ navigation }) {
     setModalVisible(true);
   };
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      showModal("Erro", "Por favor, preencha todos os campos.");
-      return;
-    }
 
-    setLoading(true);
-    try {
-      const emailQuery = query(collection(db, "maes"), where("email", "==", email.trim().toLowerCase()));
-      const querySnapshot = await getDocs(emailQuery);
 
-      if (querySnapshot.empty) {
-        showModal("Erro", "E-mail não cadastrado.");
-        setLoading(false);
-        return;
-      }
+const handleLogin = async () => {
+  if (!email || !password) {
+    showModal("Erro", "Por favor, preencha todos os campos.");
+    return;
+  }
 
-      let userFound = null;
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.senha === password) {
-          userFound = { id: doc.id, ...data }; 
-        }
-      });
+  setLoading(true);
 
-      if (!userFound) {
-        showModal("Erro", "Senha incorreta.");
-        setLoading(false);
-        return;
-      }
+  try {
+    const result = await login(email.trim().toLowerCase(), password);
 
-      showModal("Bem-vinda!", "Login realizado com sucesso!", () => {
-        setModalVisible(false);
-        navigation.navigate("MotherRoot", { user: userFound });  
-      });
+    showModal("Bem-vinda!", "Login realizado com sucesso!", () => {
+      setModalVisible(false);
+      navigation.navigate("MotherRoot");
+    });
 
-    } catch (error) {
-      console.error("Erro ao fazer login:", error);
-      showModal("Erro", "Erro ao fazer login. Tente novamente.");
-    }
-    setLoading(false);
-  };
+  } catch (err) {
+    showModal("Erro", err.message || "Erro ao fazer login.");
+  }
+
+  setLoading(false);
+};
+
 
   return (
     <>

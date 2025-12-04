@@ -29,8 +29,8 @@ import VisibleProfileScreen from "./screens/VisibleProfile";
 import PublishedArticlesScreen from "./screens/PublishedArticles";
 import AppDrawer from "./AppDrawer";
 import AddArticleScreen from "./screens/AddArticle";
-import MotherProvider from './providers/MotherContext';
-import ProfessionalProvider from './providers/ProfessionalContext';
+import { MotherProvider } from './providers/MotherContext';
+import { ProfessionalProvider } from './providers/ProfessionalContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -48,6 +48,7 @@ function MotherStack() {
         <Stack.Screen name="ProfileMother" component={ProfileMotherScreen} />
         <Stack.Screen name="Comment" component={CommentScreen} />
         <Stack.Screen name="NewComment" component={NewCommentScreen} />
+        <Stack.Screen name="SeeAll" component={SeeAllScreen} />
         </Stack.Navigator>
     </MotherProvider>
   );
@@ -77,7 +78,6 @@ function CommonStack() {
          <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Create" component={CreateScreen} />
         <Stack.Screen name="Publication" component={PublicationScreen} />
-        <Stack.Screen name="SeeAll" component={SeeAllScreen} />
         <Stack.Screen name="User" component={UserScreen} />
         <Stack.Screen name="RecentArticles" component={RecentArticlesScreen} />
         <Stack.Screen name="VisibleProfile" component={VisibleProfileScreen} />
