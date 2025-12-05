@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,17 +14,33 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
+import { useProfessional } from "../providers/ProfessionalContext";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 export default function AddArticleScreen() {
   const navigation = useNavigation();
 
+  const { professionalData } = useProfessional();
+
   const [image, setImage] = useState(null);
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
+
+  const [articleHtml, setArticleHtml] = useState('');
   const richText = useRef();
 
-  // Guarda o conteúdo HTML do editor (opcional)
-  const [articleHtml, setArticleHtml] = useState('');
+  useEffect(() => {
+  const today = new Date();
+  const formatted =
+    today.getDate().toString().padStart(2, '0') + '/' +
+    (today.getMonth() + 1).toString().padStart(2, '0') + '/' +
+    today.getFullYear();
+
+  setCurrentDate(formatted);
+}, []);
+
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -37,14 +53,38 @@ export default function AddArticleScreen() {
     }
   };
 
-  const onSave = () => {
-    // Aqui você pode pegar o conteúdo HTML e salvar ou enviar para backend
-    richText.current?.getContentHtml().then((html) => {
-      console.log('Conteúdo HTML:', html);
-      // Navega para HomeProfessional depois de salvar
-      navigation.navigate('HomeProfessional');
+const onSave = async () => {
+  try {
+    const html = await richText.current?.getContentHtml();
+
+    if (!professionalData?.id) {
+      alert("Erro: ID do profissional não encontrado.");
+      return;
+    }
+
+    await addDoc(collection(db, "artigos"), {
+      titulo: title,
+      subtitulo: subtitle,
+      conteudo: html,
+      image: image || null,
+      id_autor: professionalData.id,
+      autor: professionalData.nome || "Profissional",
+      profissao: professionalData.profissao || "",
+      data_criacao: Timestamp.now(),
+      views: "0",
+      curtidas: [],
+      tags: [],
+      postadoTempo: "0 dias",
+      tempo: "0 minutos",
     });
-  };
+
+    navigation.navigate("HomeProfessional");
+  } catch (error) {
+    console.error("Erro ao salvar artigo:", error);
+    alert("Não foi possível salvar o artigo.");
+  }
+};
+
 
   return (
     <KeyboardAvoidingView
@@ -90,12 +130,11 @@ export default function AddArticleScreen() {
           />
 
           <Text style={styles.doctor}>
-            Dra. Mayara Almeida de Campos - Pediatra
+            {professionalData.name} - {professionalData.profissao || 'Profissional'}
           </Text>
 
-          <Text style={styles.date}>Data</Text>
+          <Text style={styles.date}>{currentDate}</Text>
 
-          {/* Editor Rich Text */}
           <RichEditor
             ref={richText}
             placeholder="Digite seu artigo"
@@ -110,7 +149,6 @@ export default function AddArticleScreen() {
             onChange={setArticleHtml}
           />
 
-          {/* Toolbar de formatação */}
           <RichToolbar
             editor={richText}
             actions={[

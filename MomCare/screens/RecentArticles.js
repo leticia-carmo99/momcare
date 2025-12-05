@@ -11,8 +11,8 @@ import { useProfessional } from "../providers/ProfessionalContext";
     const categoryLower = article.category.toLowerCase();
     const words = String(article.title || "").split(" ");
     const formattedTitle = words.map((word, index) => {
-        const cleanWord = word.replace(/[^a-zA-ZÀ-ú]/g, "");
-        const isBold = cleanWord.toLowerCase() === categoryLower;
+    const cleanWord = word.replace(/[^a-zA-ZÀ-ú]/g, "");
+    const isBold = cleanWord.toLowerCase() === categoryLower;
         return (
             <Text key={index} style={isBold ? { fontWeight: "bold" } : null}>
                 {word + " "}

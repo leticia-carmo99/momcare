@@ -43,9 +43,12 @@ const EditProfileModal = ({
       <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
         <Text style={styles.label}>Nome Completo</Text>
         <TextInput style={styles.input} value={name} onChangeText={setName} /> 
+        
+        <Text style={styles.label}>Profissão</Text>
+        <TextInput style={styles.input} value={specialty} onChangeText={setSpecialty} placeholder="Ex: Pediatra" />
 
         <Text style={styles.label}>Especialidade</Text>
-        <TextInput style={styles.input} value={specialty} onChangeText={setSpecialty} placeholder="Ex: Pediatra" />
+        <TextInput style={styles.input} value={specialty} onChangeText={setSpecialty} placeholder="Ex: Nanologista" />
 
         <Text style={styles.label}>CRM (com estado)</Text>
         <TextInput style={styles.input} value={crm} onChangeText={setCrm} placeholder="Ex: 12345-SP" />
@@ -159,25 +162,29 @@ export default function ProfileProfessional({ navigation }) {
     const [modalVisible, setModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [crm, setCrm] = useState("");
+    const [profissao, setProfissao] = useState("");
     const [specialty, setSpecialty] = useState("");
     const [phone, setPhone] = useState("");
     const [address, setAddress] = useState("");
 
     const [alertVisible, setAlertVisible] = useState(false);
-  const [alertTitle, setAlertTitle] = useState("");
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertConfirmAction, setAlertConfirmAction] = useState(() => () => {});
-  const [alertCancelAction, setAlertCancelAction] = useState(null);
-  const [alertConfirmText, setAlertConfirmText] = useState("OK");
-  const [alertCancelText, setAlertCancelText] = useState("Cancelar");
+    const [alertTitle, setAlertTitle] = useState("");
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertConfirmAction, setAlertConfirmAction] = useState(() => () => {});
+    const [alertCancelAction, setAlertCancelAction] = useState(null);
+    const [alertConfirmText, setAlertConfirmText] = useState("OK");
+    const [alertCancelText, setAlertCancelText] = useState("Cancelar");
+    const [articleCount, setArticleCount] = useState(0);
+
 
 useEffect(() => {
     if (professionalData) {
       setName(professionalData.name || "");
       setCrm(professionalData.crm || "");
-      setSpecialty(professionalData.especialidade || "Especialista");
+      setProfissao(professionalData.profissao || "");
+      setSpecialty(professionalData.especialidade || "");
       setPhone(professionalData.telefone || "");
-      setAddress(professionalData.endereco || "São Paulo, SP");
+      setAddress(professionalData.endereco || "");
     }
   }, [professionalData]);
 
@@ -229,6 +236,7 @@ useEffect(() => {
       const updates = {
         name: name.trim(),
         crm: crm.trim(),
+        profissao: profissao.trim(),
         especialidade: specialty.trim(),
         telefone: phone.trim(),
         endereco: address.trim(),
@@ -244,6 +252,27 @@ useEffect(() => {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+  if (!professionalData?.id) return;
+
+  async function fetchArticleCount() {
+    try {
+      const q = query(
+        collection(db, "artigos"),
+        where("id_autor", "==", professionalData.id)
+      );
+
+      const snapshot = await getDocs(q);
+      setArticleCount(snapshot.size); 
+    } catch (error) {
+      console.error("Erro ao contar artigos:", error);
+    }
+  }
+
+  fetchArticleCount();
+}, [professionalData?.id]);
+
 
   return (
     <View style={styles.container}>
@@ -327,7 +356,7 @@ useEffect(() => {
 
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>24</Text>
+            <Text style={styles.statNumber}>{articleCount}</Text>
             <Text style={styles.statLabel}>artigos publicados</Text>
           </View>
           <View style={styles.statBox}>

@@ -1,11 +1,62 @@
-import React from "react";
+import React, { useState, useEffect} from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNavProfessional";
 import doctorImage from "../assets/fotoperfil.png";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
+
+import { useProfessional } from "../providers/ProfessionalContext";
 
 export default function HomeProfessional({ navigation }) {
+  const { professionalData } = useProfessional();
+
+  const [articles, setArticles] = useState([]);
+const [articleCount, setArticleCount] = useState(0);
+const [totalLikes, setTotalLikes] = useState(0);
+
+
+useEffect(() => {
+  if (!professionalData?.id) return;
+
+  async function loadArticles() {
+    try {
+      const q = query(
+        collection(db, "artigos"),
+        where("id_autor", "==", professionalData.id)
+      );
+
+      const snapshot = await getDocs(q);
+
+      let list = [];
+      let likesSum = 0;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        likesSum += data.curtidas?.length || 0;
+
+        list.push({
+          id: doc.id,
+          ...data,
+          curtidasCount: data.curtidas?.length || 0,
+        });
+      });
+      list.sort((a, b) => b.curtidasCount - a.curtidasCount);
+
+      setArticles(list);
+      setArticleCount(list.length);
+      setTotalLikes(likesSum);
+
+    } catch (error) {
+      console.error("Erro ao buscar artigos:", error);
+    }
+  }
+
+  loadArticles();
+}, [professionalData?.id]);
+
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView
@@ -22,7 +73,7 @@ export default function HomeProfessional({ navigation }) {
             <Ionicons name="heart-outline" size={28} color="#fff" />
           </LinearGradient>
           <View style={{ marginLeft: 12 }}>
-            <Text style={styles.greeting}>Boa tarde, Dra. Natália!</Text>
+            <Text style={styles.greeting}>Boa tarde, {professionalData.name || "Usuário"}!</Text>
             <Text style={styles.subTitle}>Área do profissional</Text>
           </View>
         </View>
@@ -31,13 +82,13 @@ export default function HomeProfessional({ navigation }) {
           <Image source={doctorImage} style={styles.doctorImage} />
           <View style={{ marginLeft: 12, flex: 1 }}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={styles.doctorName}>Dra. Natália dos Santos</Text>
+              <Text style={styles.doctorName}>Dra. {professionalData.name || "Usuário"}</Text>
               <View style={styles.specialtyBadge}>
-                <Text style={styles.specialtyText}>Pediatra</Text>
+                <Text style={styles.specialtyText}>{professionalData.profissao || "Profissional"}</Text>
               </View>
             </View>
             <Text style={styles.doctorSubtitle}>
-              CRM 12345-SP • Especialista em Neonatologia
+              CRM {professionalData.crm || "..."} • Especialista em {professionalData.especialidade || "..."}
             </Text>
           </View>
         </View>
@@ -58,21 +109,21 @@ export default function HomeProfessional({ navigation }) {
         <View style={styles.statsContainer}>
           {renderStat(
             "Artigos publicados",
-            "24",
+            articleCount,
             "+3 este mês",
             ["#F59BC9", "#80003E"],
             "document-text-outline"
           )}
           {renderStat(
             "Visualizações",
-            "12.4k",
+            "130",
             "+18% este mês",
             ["#80B3FF", "#004BA8"],
             "eye-outline"
           )}
           {renderStat(
             "Curtidas",
-            "3.2k",
+            totalLikes,
             "+24% este mês",
             ["#FF5C7C", "#990032"],
             "heart-outline"
@@ -93,47 +144,47 @@ export default function HomeProfessional({ navigation }) {
           </View>
 
           <View style={styles.articleItem}>
-            <View style={styles.articleInfo}>
-              <Text style={styles.articleTitle}>
-                Primeiros sinais de{"\n"}
-                desenvolvimento motor
-              </Text>
-              <View style={styles.articleMeta}>
-                <Text style={[styles.articleBadge, { fontWeight: "bold" }]}>
-                  Desenvolvimento
-                </Text>
-                <Text style={styles.articleDate}>2 dias atrás</Text>
-              </View>
-              <View style={styles.articleStatsRow}>
-                <View style={styles.articleStatsGroup}>
-                  <View style={styles.articleStatsItem}>
-                    <Ionicons name="eye-outline" size={14} color="#888" />
-                    <Text style={styles.articleStatsText}>234</Text>
-                  </View>
-                  <View style={styles.articleStatsItem}>
-                    <Ionicons name="heart-outline" size={14} color="#888" />
-                    <Text style={styles.articleStatsText}>54</Text>
-                  </View>
-                  <View style={styles.articleStatsItem}>
-                    <Ionicons
-                      name="chatbubble-ellipses-outline"
-                      size={14}
-                      color="#888"
-                    />
-                    <Text style={styles.articleStatsText}>12</Text>
-                  </View>
-                </View>
-              </View>
+ {articles.length === 0 ? (
+  <Text style={{ color: "#666", fontSize: 14 }}>Você ainda não publicou nenhum artigo.</Text>
+) : (
+  articles.slice(0, 3).map((item) => (
+    <View style={styles.articleItem} key={item.id}>
+      <View style={styles.articleInfo}>
+        <Text style={styles.articleTitle}>{item.titulo}</Text>
+
+        <View style={styles.articleMeta}>
+          <Text style={styles.articleBadge}>Geral</Text>
+          <Text style={styles.articleDate}>{item.postadoTempo || "Hoje"}</Text>
+        </View>
+
+        <View style={styles.articleStatsRow}>
+          <View style={styles.articleStatsGroup}>
+            <View style={styles.articleStatsItem}>
+              <Ionicons name="eye-outline" size={14} color="#888" />
+              <Text style={styles.articleStatsText}>{item.views || 0}</Text>
             </View>
 
-            <View style={styles.articleActions}>
-              <View style={styles.publishedBadge}>
-                <Text style={styles.publishedText}>Publicado</Text>
-              </View>
-              <TouchableOpacity>
-                <Text style={[styles.editLink, { marginTop: 50 }]}>Editar</Text>
-              </TouchableOpacity>
+            <View style={styles.articleStatsItem}>
+              <Ionicons name="heart-outline" size={14} color="#888" />
+              <Text style={styles.articleStatsText}>{item.curtidasCount}</Text>
             </View>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.articleActions}>
+        <View style={styles.publishedBadge}>
+          <Text style={styles.publishedText}>Publicado</Text>
+        </View>
+
+        <TouchableOpacity>
+          <Text style={[styles.editLink, { marginTop: 50 }]}>Editar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ))
+)}
+
           </View>
         </View>
       </ScrollView>
