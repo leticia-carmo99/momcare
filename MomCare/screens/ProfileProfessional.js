@@ -24,6 +24,7 @@ const EditProfileModal = ({
   name, setName, 
   crm, setCrm, 
   specialty, setSpecialty, 
+  profissao, setProfissao,
   phone, setPhone, 
   address, setAddress 
 }) => (
@@ -45,7 +46,7 @@ const EditProfileModal = ({
         <TextInput style={styles.input} value={name} onChangeText={setName} /> 
         
         <Text style={styles.label}>Profissão</Text>
-        <TextInput style={styles.input} value={specialty} onChangeText={setSpecialty} placeholder="Ex: Pediatra" />
+        <TextInput style={styles.input} value={profissao} onChangeText={setProfissao} placeholder="Ex: Pediatra" />
 
         <Text style={styles.label}>Especialidade</Text>
         <TextInput style={styles.input} value={specialty} onChangeText={setSpecialty} placeholder="Ex: Nanologista" />

@@ -4,8 +4,8 @@ import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { db } from "../firebaseConfig";
-import { collection, query, where, getDocs, orderBy, updateDoc, doc } from "firebase/firestore";
-
+import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, Timestamp } from "firebase/firestore";
+import { useProfessional } from "../providers/ProfessionalContext";
 
 
 LocaleConfig.locales['pt-br'] = {
@@ -21,7 +21,8 @@ LocaleConfig.locales['pt-br'] = {
 LocaleConfig.defaultLocale = 'pt-br';
 
 export default function CreateProfessional() {
-  const navigation = useNavigation();
+const navigation = useNavigation();
+  const { professionalId } = useProfessional();
 
   const today = new Date();
   const todayStr = today.getFullYear() + '-' +
@@ -65,8 +66,40 @@ export default function CreateProfessional() {
     }
   };
 
+  const handleCreateTask = async () => {
+  if (!title.trim()) {
+    console.log("Título obrigatório");
+    return;
+  }
+
+  if (!professionalId) {
+    console.log("professionalId não encontrado!");
+    return;
+  }
+
+  try {
+    const day = selectedDate.split("-")[2];
+
+    await addDoc(collection(db, "tarefas"), {
+      userId: professionalId,
+      title,
+      description,
+      date: new Date().toISOString().split("T")[0],
+      time: `${startTime} - ${endTime}`,
+      done: false,
+      createdAt: Timestamp.now(),
+    });
+
+    navigation.goBack();
+
+  } catch (error) {
+    console.log("Erro ao criar tarefa:", error);
+  }
+};
+
+
   return (
-    <SafeAreaView style={styles.container}>
+ <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
 
         <View style={styles.headerContainer}>
@@ -152,7 +185,7 @@ export default function CreateProfessional() {
           </View>
 
           <TouchableOpacity style={styles.addButton}>
-            <Text style={styles.addButtonText}>Adicionar</Text>
+            <Text style={styles.addButtonText} onPress={handleCreateTask}>Adicionar</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -287,7 +287,11 @@ art.tags?.some(t => t.toLowerCase() === selectedCategory.toLowerCase())
       </View>
 
       <Text style={styles.recommendedTitle}>Artigos recomendados</Text>
-       {getFilteredArticles().map((item) => renderArticleCard({ item }))}
+       {getFilteredArticles().map((item) => (
+  <View key={item.id}>
+    {renderArticleCard({ item })}
+  </View>
+))}
 
       <View style={{ height: 60 }} />
     </ScrollView>
