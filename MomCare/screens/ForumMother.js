@@ -208,8 +208,14 @@ async function toggleCurtida(postId, curtidasAtuais) {
       return (
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('Publication', { postId: item.id })} key={item.id} 
-        >
+            onPress={() =>
+                navigation.navigate('CommonStack', {
+                screen: 'Publication',
+                params: { postId: item.id }
+              })
+            }
+            key={item.id}
+          >
           {PostContent}
         </TouchableOpacity>
       );

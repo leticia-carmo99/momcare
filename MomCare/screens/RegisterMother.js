@@ -131,9 +131,9 @@ export default function RegisterMother({ navigation }) {
                 senha: password,
             };
 
-            const user = await signup(dados); 
+            const motherData = await signup(dados); 
             showModal("Sucesso", "Cadastro realizado com sucesso!", () => {
-                navigation.navigate("MotherRoot", { user }); 
+                navigation.navigate("MotherRoot", { motherData }); 
             });
 
         } catch (error) {

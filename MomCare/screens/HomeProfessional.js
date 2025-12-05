@@ -79,7 +79,7 @@ useEffect(() => {
         </View>
 
         <View style={styles.doctorCardPlain}>
-          <Image source={doctorImage} style={styles.doctorImage} />
+          <Image source={{uri: 'https://i.pinimg.com/736x/83/b0/7f/83b07fe79c4bdcc8e6c27f974c597842.jpg'}} style={styles.doctorImage} />
           <View style={{ marginLeft: 12, flex: 1 }}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Text style={styles.doctorName}>Dra. {professionalData.name || "Usuário"}</Text>

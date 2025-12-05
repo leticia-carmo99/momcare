@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, FlatList, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavProfessional";
@@ -7,9 +7,10 @@ import {
   doc,
   collection,
   getDocs,
-  query,
-  where,
-  getDoc
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove
 } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useProfessional } from "../providers/ProfessionalContext";
@@ -100,29 +101,29 @@ export default function ForumProfessional({ navigation }) {
 async function toggleCurtida(postId, curtidasAtuais) {
   try {
     const postRef = doc(db, "forum", postId);
-    const jaCurtiu = curtidasAtuais.includes(motherData.id);
+    const jaCurtiu = curtidasAtuais.includes(professionalData.id);
 
     if (jaCurtiu) {
       await updateDoc(postRef, {
-        curtidas: arrayRemove(motherData.id)
+        curtidas: arrayRemove(professionalData.id)
       });
 
       setPostsState(prev =>
         prev.map(post =>
           post.id === postId
-            ? { ...post, curtidas: post.curtidas - 1, curtidasLista: curtidasAtuais.filter(id => id !== motherData.id) }
+            ? { ...post, curtidas: post.curtidas - 1, curtidasLista: curtidasAtuais.filter(id => id !== professionalData.id) }
             : post
         )
       );
     } else {
       await updateDoc(postRef, {
-        curtidas: arrayUnion(motherData.id)
+        curtidas: arrayUnion(professionalData.id)
       });
 
       setPostsState(prev =>
         prev.map(post =>
           post.id === postId
-            ? { ...post, curtidas: post.curtidas + 1, curtidasLista: [...curtidasAtuais, motherData.id] }
+            ? { ...post, curtidas: post.curtidas + 1, curtidasLista: [...curtidasAtuais, professionalData.id] }
             : post
         )
       );
@@ -195,12 +196,12 @@ async function toggleCurtida(postId, curtidasAtuais) {
               >
                 <Ionicons
                   name={
-                    item.curtidasLista.includes(motherData.id)
+                    item.curtidasLista.includes(professionalData.id)
                       ? "thumbs-up"
                       : "thumbs-up-outline"
                   }
                   size={16}
-                  color={item.curtidasLista.includes(motherData.id) ? "#C31E65" : "#888"}
+                  color={item.curtidasLista.includes(professionalData.id) ? "#C31E65" : "#888"}
                 />
                 <Text style={styles.actionText}>{item.curtidas}</Text>
               </TouchableOpacity>
@@ -214,8 +215,12 @@ async function toggleCurtida(postId, curtidasAtuais) {
       return (
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('Publication', { postId: item.id })} key={item.id} 
-        >
+          onPress={() => 
+                navigation.navigate('CommonStack', {
+                screen: 'Publication',
+                params: { postId: item.id }
+              })
+            }>
           {PostContent}
         </TouchableOpacity>
       );

@@ -33,7 +33,7 @@ import {
 import { app } from "../firebaseConfig";
 import { useMother } from "../providers/MotherContext";
 
-export default function HomeMother({ navigation, route }) {
+export default function HomeMother({ navigation }) {
   const { motherData } = useMother();
   const [bebes, setBebes] = useState([]);
   const [sorrisosHoje, setSorrisosHoje] = useState(0);
@@ -122,8 +122,8 @@ export default function HomeMother({ navigation, route }) {
   };
 
   useEffect(() => {
-    if (!user?.id) return;
-    const usuarioDoc = doc(db, "maes", user.id);
+    if (!motherData?.id) return;
+    const usuarioDoc = doc(db, "maes", motherData.id);
     getDoc(usuarioDoc).then((docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -166,7 +166,7 @@ export default function HomeMother({ navigation, route }) {
         });
       }
     });
-  }, [user]);
+  }, [motherData]);
 
   useEffect(() => {
     const now = new Date();
@@ -175,8 +175,8 @@ export default function HomeMother({ navigation, route }) {
       now;
 
     const resetTimer = setTimeout(() => {
-      if (user?.id) {
-        const usuarioDoc = doc(db, "maes", user.id);
+      if (motherData?.id) {
+        const usuarioDoc = doc(db, "maes", motherData.id);
         const hoje = new Date();
         setSorrisosHoje(0);
         setTempoSono({ horas: 0, minutos: 0 });
@@ -194,12 +194,12 @@ export default function HomeMother({ navigation, route }) {
     }, millisTillMidnight);
 
     return () => clearTimeout(resetTimer);
-  }, [user]);
+  }, [motherData]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!motherData?.id) return;
 
-    const q = query(collection(db, "bebes"), where("userId", "==", user.id));
+    const q = query(collection(db, "bebes"), where("userId", "==", motherData.id));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const listaBebes = [];
@@ -210,29 +210,76 @@ export default function HomeMother({ navigation, route }) {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [motherData]);
 
-  useEffect(() => {
-  if (!user?.id) return;
+useEffect(() => {
+  const motherId = motherData?.motherId ?? motherData?.id ?? null;
+  console.log("[TAREFAS] motherData:", motherData);
+  console.log("[TAREFAS] resolvido motherId:", motherId);
 
-  const q = query(
-    collection(db, "tarefas"),
-    where("userId", "==", user.id)
-  );
+  if (!motherId) {
+    setTarefas([]);
+    return;
+  }
 
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const list = [];
+  let unsubscribes = [];
 
-    snapshot.forEach((doc) => {
-      list.push({ id: doc.id, ...doc.data() });
+  const tryQuery = async () => {
+    try {
+      const q1 = query(collection(db, "tarefas"), where("motherId", "==", motherId));
+      const unsub1 = onSnapshot(q1, (snap) => {
+        console.log("[TAREFAS] query motherId size:", snap.size);
+        if (!snap.empty) {
+          const list = [];
+          snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+          normalizeAndSet(list);
+        }
+      }, (err) => console.error("[TAREFAS] erro snapshot motherId:", err));
+      unsubscribes.push(unsub1);
+
+      const q2 = query(collection(db, "tarefas"), where("userId", "==", motherId));
+      const unsub2 = onSnapshot(q2, (snap) => {
+        console.log("[TAREFAS] query userId size:", snap.size);
+        if (!snap.empty) {
+          const list = [];
+          snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+          setTarefas((prev) => {
+            const combined = [...prev];
+            list.forEach((item) => {
+              if (!combined.find((c) => c.id === item.id)) combined.push(item);
+            });
+            normalizeAndSet(combined);
+            return combined;
+          });
+        }
+      }, (err) => console.error("[TAREFAS] erro snapshot userId:", err));
+      unsubscribes.push(unsub2);
+    } catch (err) {
+      console.error("[TAREFAS] erro ao executar queries:", err);
+    }
+  };
+
+  function normalizeAndSet(list) {
+    const normalized = list.map((t) => {
+      const millis =
+        t.createdAt?.toMillis?.() ??
+        (typeof t.createdAt === "string" ? Date.parse(t.createdAt) : (t.createdAt instanceof Date ? t.createdAt.getTime() : 0));
+      return { ...t, _createdMillis: millis };
     });
-    list.sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
 
-    setTarefas(list);
-  });
+    normalized.sort((a, b) => (a._createdMillis || 0) - (b._createdMillis || 0));
+    console.log("[TAREFAS] tarefas normalizadas:", normalized);
+    setTarefas(normalized);
+  }
 
-  return () => unsubscribe();
-}, [user]);
+  tryQuery();
+
+  return () => {
+    unsubscribes.forEach((u) => typeof u === "function" && u());
+  };
+}, [motherData?.motherId, motherData?.id]);
+
+
 
 
   function calcularIdade(dataNascimento) {
@@ -261,7 +308,7 @@ export default function HomeMother({ navigation, route }) {
       horas += 1;
       minutos -= 60;
     }
-    const usuarioDoc = user?.id ? doc(db, "maes", user.id) : null;
+    const usuarioDoc = motherData?.id ? doc(db, "maes", motherData.id) : null;
     setTempoSono({ horas, minutos });
     if (usuarioDoc) {
       setDoc(
@@ -292,8 +339,8 @@ export default function HomeMother({ navigation, route }) {
       const valor = parseInt(inputModal);
       if (!isNaN(valor) && valor >= 0) {
         setSorrisosHoje(valor);
-        if (user?.id) {
-          const usuarioDoc = doc(db, "maes", user.id);
+        if (motherData?.id) {
+          const usuarioDoc = doc(db, "maes", motherData.id);
           setDoc(
             usuarioDoc,
             {
@@ -316,8 +363,8 @@ export default function HomeMother({ navigation, route }) {
         minutos <= 59
       ) {
         setTempoSono({ horas, minutos });
-        if (user?.id) {
-          const usuarioDoc = doc(db, "maes", user.id);
+        if (motherData?.id) {
+          const usuarioDoc = doc(db, "maes", motherData.id);
           setDoc(
             usuarioDoc,
             {
@@ -479,8 +526,8 @@ export default function HomeMother({ navigation, route }) {
               onPress={() => {
                 const novo = sorrisosHoje > 0 ? sorrisosHoje - 1 : 0;
                 setSorrisosHoje(novo);
-                if (user?.id) {
-                  const usuarioDoc = doc(db, "maes", user.id);
+                if (motherData?.id) {
+                  const usuarioDoc = doc(db, "maes", motherData.id);
                   setDoc(
                     usuarioDoc,
                     {
@@ -500,8 +547,8 @@ export default function HomeMother({ navigation, route }) {
               onPress={() => {
                 const novo = sorrisosHoje + 1;
                 setSorrisosHoje(novo);
-                if (user?.id) {
-                  const usuarioDoc = doc(db, "maes", user.id);
+                if (motherData?.id) {
+                  const usuarioDoc = doc(db, "maes", motherData.id);
                   setDoc(
                     usuarioDoc,
                     {
@@ -541,8 +588,8 @@ export default function HomeMother({ navigation, route }) {
                   minutos = 45;
                 }
                 setTempoSono({ horas, minutos });
-                if (user?.id) {
-                  const usuarioDoc = doc(db, "maes", user.id);
+                if (motherData?.id) {
+                  const usuarioDoc = doc(db, "maes", motherData.id);
                   setDoc(
                     usuarioDoc,
                     {
@@ -612,21 +659,9 @@ export default function HomeMother({ navigation, route }) {
                 </Text>
               )}
 
-          <View style={styles.activityItem}>
-            <MaterialCommunityIcons
-              name="bathtub-outline"
-              size={22}
-              color="#C31E65"
-            />
-            <View style={styles.activityTextContainer}>
-              <Text style={styles.activityText}>Banho</Text>
-              <Text style={styles.activitySubText}>Hoje às 16h</Text>
-            </View>
-          </View>
         </View>
       </ScrollView>
 
-      {/* Modal para Sorrisos/Sono (Original) */}
       <Modal transparent={true} animationType="fade" visible={modalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -703,7 +738,7 @@ export default function HomeMother({ navigation, route }) {
         </View>
       </Modal>
 
-      <BottomNav navigation={navigation} activeScreen="HomeMother" user={user} />
+      <BottomNav navigation={navigation} activeScreen="HomeMother" motherData={motherData} />
     </View>
   );
 }

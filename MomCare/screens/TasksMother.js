@@ -89,7 +89,6 @@ function formatarDataHeader(selectedDay) {
 }
 
 
-
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
@@ -126,7 +125,7 @@ function formatarDataHeader(selectedDay) {
 
                 >
                   <Text style={[styles.dayDate, isActive && styles.dayDateActive]}>
-                    {dia.date}
+                    {dia.dateNumber}
                   </Text>
                   <Text
                     style={[styles.dayWeek, isActive && styles.dayWeekActive]}

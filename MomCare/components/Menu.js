@@ -9,7 +9,7 @@ export default function Menu({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.profileSection}>
-        <Image source={fotoperfil} style={styles.avatar} />
+        <Image source={{uri: 'https://i.pinimg.com/736x/83/b0/7f/83b07fe79c4bdcc8e6c27f974c597842.jpg'}} style={styles.avatar} />
         <View>
           <Text style={styles.name}>{motherData?.name || "Usuário"}</Text>
           <TouchableOpacity onPress={() => navigation.navigate("ProfileMother")}>
