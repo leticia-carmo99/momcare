@@ -32,6 +32,10 @@ import AppDrawer from "./AppDrawer";
 import AddArticleScreen from "./screens/AddArticle";
 import { MotherProvider } from './providers/MotherContext';
 import { ProfessionalProvider } from './providers/ProfessionalContext';
+import FavoriteArticlesScreen from "./screens/FavoriteArticles";
+import SettingsScreen from "./screens/Settings";
+import AboutUsScreen from "./screens/AboutUs";
+import ExamsScreen from "./screens/Exams";
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +56,10 @@ function MotherStack() {
         <Stack.Screen name="SeeAll" component={SeeAllScreen} />
         <Stack.Screen name="Create" component={CreateMother} />
         <Stack.Screen name="PublishedArticles" component={PublishedArticlesScreen} />
+        <Stack.Screen name="FavoriteArticles" component={FavoriteArticlesScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="AboutUs" component={AboutUsScreen} />
+        <Stack.Screen name="Exams" component={ExamsScreen} />
         </Stack.Navigator>
     </MotherProvider>
   );

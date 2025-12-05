@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
-import { doc, getDoc, getDocs, collection, where, orderBy, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
-import { db } from "../firebaseConfig";
 import { useMother } from "../providers/MotherContext";
+import { 
+  collection, query, where, getDocs, orderBy 
+} from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
-const categories = [
+export default function FavoriteArticles({ navigation }) {
+  const { motherData } = useMother();
+
+  const [searchText, setSearchText] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedFilter, setSelectedFilter] = useState("recent");
+  const [favoriteArticles, setFavoriteArticles] = useState([]);
+
+  const categories = [
   { id: "all", label: "Todos", icon: "book-open-outline", count: 156 },
   { id: "care", label: "Cuidados", icon: "emoticon-happy-outline", count: 23 },
   { id: "food", label: "Alimentação", icon: "silverware-fork-knife", count: 34 },
@@ -15,167 +25,70 @@ const categories = [
 ];
 
 
-export default function PublishedArticles({ navigation }) {
-  const { motherData } = useMother();
-  const [searchText, setSearchText] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedFilter, setSelectedFilter] = useState("recent");
-  const [articles, setArticles] = useState([]);
+   useEffect(() => {
+    async function loadFavorites() {
+      try {
+        if (!motherData?.id) return;
 
-  const filterButtons = [
-    { id: "recent", label: "Mais recentes" },
-    { id: "popular", label: "Mais populares" },
-    { id: "liked", label: "Mais curtidas" },
-  ];
+        const articlesRef = collection(db, "artigos");
+        const q = query(
+          articlesRef,
+          where("curtidas", "array-contains", motherData.id)
+        );
 
-useEffect(() => {
-  async function loadArticles() {
-    try {
-      const snap = await getDocs(collection(db, "artigos"));
+        const querySnap = await getDocs(q);
 
-      const list = await Promise.all(
-        snap.docs.map(async (docItem) => {
-          const data = docItem.data();
-
-          let autorData = {
-            nome: data.autor || "Desconhecido",
-            profissao: data.profissao || "Profissional",
-            avatar: null,
-          };
-          if (data.id_autor) {
-            try {
-              const profRef = doc(db, "profissional", data.id_autor);
-              const profSnap = await getDoc(profRef);
-
-              if (profSnap.exists()) {
-                const prof = profSnap.data();
-                autorData = {
-                  nome: prof.nome,
-                  profissao: prof.profissao,
-                  avatar: prof.avatar || null,
-                };
-              }
-            } catch (e) {
-              console.log("Erro ao buscar profissional:", e);
-            }
-          }
-
-          return {
-            id: docItem.id,
-            title: data.titulo,
-            subtitle: data.subtitulo,
-            author: autorData.nome,
-            role: autorData.profissao,
-            avatar: autorData.avatar,
-            tags: data.tags || [],
-            readingTime: data.tempo,
-            postedAgo: data.postadoTempo,
+        const list = [];
+        querySnap.forEach((doc) => {
+          const data = doc.data();
+          list.push({
+            id: doc.id,
+            ...data,
             likesList: data.curtidas || [],
             likes: data.curtidas?.length || 0,
-            views: data.views || 0,
-            image: data.image || null,
-            createdAt: data.data_criacao ? data.data_criacao.toDate() : new Date(0), 
-          };
-        })
-      );
+          });
+        });
 
-      setArticles(list);
-    } catch (err) {
-      console.log("Erro ao carregar artigos:", err);
-    }
-  }
-
-  loadArticles();
-}, []);
-
-const getFilteredAndSortedArticles = () => {
-    let result = [...articles];
-    if (searchText.trim()) {
-      const text = searchText.toLowerCase();
-      result = result.filter((article) => {
-        return (
-          article.title.toLowerCase().includes(text) ||
-          (article.subtitle && article.subtitle.toLowerCase().includes(text))
-        );
-      });
-    }
-
-    if (selectedCategory !== "all") {
-      const categoryObj = categories.find((c) => c.id === selectedCategory);
-      if (categoryObj) {
-        result = result.filter((article) =>
-          article.tags.some(
-            (tag) => tag.toLowerCase() === categoryObj.label.toLowerCase()
-          )
-        );
+        setFavoriteArticles(list);
+      } catch (e) {
+        console.log("Erro ao carregar curtidos:", e);
       }
     }
 
-    
-    switch (selectedFilter) {
-      case "popular":
-        result.sort((a, b) => b.views - a.views);
-        break;
+    loadFavorites();
+  }, [motherData]);
 
-      case "liked":
-        result.sort((a, b) => b.likes - a.likes);
-        break;
+   const getFilteredArticles = () => {
+    let filtered = [...favoriteArticles];
 
-      case "recent":
-      default:
-        result.sort((a, b) => b.createdAt - a.createdAt);
-        break;
+    if (searchText.trim() !== "") {
+      const text = searchText.toLowerCase();
+      filtered = filtered.filter((art) =>
+    art.titulo?.toLowerCase().includes(text)
+      );
     }
 
-    return result;
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter((art) =>
+art.tags?.some(t => t.toLowerCase() === selectedCategory.toLowerCase())
+
+      );
+    }
+
+    if (selectedFilter === "recent") {
+      filtered.sort((a, b) => b.timestamp - a.timestamp);
+    }
+
+    if (selectedFilter === "popular") {
+      filtered.sort((a, b) => b.likes - a.likes);
+    }
+
+    if (selectedFilter === "liked") {
+      filtered.sort((a, b) => b.likes - a.likes);
+    }
+
+    return filtered;
   };
-  const finalArticlesList = getFilteredAndSortedArticles();
-
-async function toggleLike(articleId, currentLikesList) {
-  try {
-    const userId = motherData?.id;
-    if (!userId) return;
-
-    const articleRef = doc(db, "artigos", articleId);
-    const alreadyLiked = currentLikesList.includes(userId);
-
-    if (alreadyLiked) {
-      await updateDoc(articleRef, {
-        curtidas: arrayRemove(userId),
-      });
-      setArticles((prev) =>
-        prev.map((art) =>
-          art.id === articleId
-            ? {
-                ...art,
-                likes: art.likes - 1,
-                likesList: art.likesList.filter((id) => id !== userId),
-              }
-            : art
-        )
-      );
-    } else {
-      await updateDoc(articleRef, {
-        curtidas: arrayUnion(userId),
-      });
-      setArticles((prev) =>
-        prev.map((art) =>
-          art.id === articleId
-            ? {
-                ...art,
-                likes: art.likes + 1,
-                likesList: [...art.likesList, userId],
-              }
-            : art
-        )
-      );
-    }
-  } catch (error) {
-    console.log("Erro ao curtir artigo:", error);
-  }
-}
-
-
 
   const renderCategoryGrid = () => (
     <View style={styles.categoriesGrid}>
@@ -222,25 +135,27 @@ async function toggleLike(articleId, currentLikesList) {
 
   const renderArticleCard = ({ item }) => (
     <View style={styles.articleCard}>
-              {item.image ? (
-  <Image source={{ uri: item.image }} style={styles.articleImagePlaceholder} />
-) : (
-  <View style={styles.articleImagePlaceholder} />
-)}
-      <Text style={styles.articleTitle}>{item.title}</Text>
-      <Text style={styles.articleSubtitle}>{item.subtitle}</Text>
+                {item.image ? (
+            <Image 
+                source={{ uri: item.image }} 
+                style={styles.articleImage} 
+            />
+            ) : (
+            <View style={styles.articleImagePlaceholder} />
+            )}
+      <Text style={styles.articleTitle}>{item.titulo}</Text>
+      <Text style={styles.articleSubtitle}>{item.subtitulo}</Text>
 
       <View style={styles.authorSection}>
-
-
+        <View style={styles.avatarPlaceholder} />
         <View>
-          <Text style={styles.authorName}>{item.author}</Text>
-          <Text style={styles.authorRole}>{item.role}</Text>
+          <Text style={styles.authorName}>{item.autor}</Text>
+          <Text style={styles.authorRole}>{item.profissao}</Text>
         </View>
       </View>
 
       <View style={styles.tagsContainer}>
-        {item.tags.map((tag, index) => (
+        {item.tags?.map((tag, index) => (
           <View key={index} style={styles.tag}>
             <Text style={styles.tagText}>{tag}</Text>
           </View>
@@ -251,37 +166,21 @@ async function toggleLike(articleId, currentLikesList) {
         <View style={styles.footerLeft}>
           <View style={styles.footerItem}>
             <Ionicons name="time-outline" size={16} color="#555" />
-            <Text style={styles.footerText}>{item.readingTime}</Text>
+            <Text style={styles.footerText}>{item.tempo || "6 minutos"}</Text>
           </View>
           <View style={styles.footerItem}>
             <Ionicons name="calendar-outline" size={16} color="#555" />
-            <Text style={styles.footerText}>{item.postedAgo}</Text>
+            <Text style={styles.footerText}>{item.postadoTempo || "3 dias"}</Text>
           </View>
         </View>
         <View style={styles.footerRight}>
-          <TouchableOpacity
-            onPress={() => toggleLike(item.id, item.likesList)}
-          >
-            <View style={styles.footerItem}>
-              <Ionicons
-                name={
-                  item.likesList.includes(motherData.id)
-                    ? "heart"
-                    : "heart-outline"
-                }
-                size={16}
-                color={
-                  item.likesList.includes(motherData.id)
-                    ? "#C31E65"
-                    : "#555"
-                }
-              />
-              <Text style={styles.footerText}>{item.likes}</Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.footerItem}>
+            <Ionicons name="heart-outline" size={16} color="#555" />
+            <Text style={styles.footerText}>{item.likes}</Text>
+          </View>
           <View style={styles.footerItem}>
             <Ionicons name="eye-outline" size={16} color="#555" />
-            <Text style={styles.footerText}>{item.views}</Text>
+            <Text style={styles.footerText}>{item.views || 0}</Text>
           </View>
         </View>
       </View>
@@ -304,7 +203,7 @@ async function toggleLike(articleId, currentLikesList) {
           <Entypo name="chevron-left" size={28} color="#C31E65" />
         </TouchableOpacity>
         <View>
-          <Text style={styles.title}>Artigos</Text>
+          <Text style={styles.title}>Artigos Favoritados</Text>
           <Text style={styles.subtitle}>Conteúdo dos especialistas</Text>
         </View>
       </View>
@@ -320,7 +219,11 @@ async function toggleLike(articleId, currentLikesList) {
       </View>
 
       <View style={styles.filterButtonsContainer}>
-        {filterButtons.map((btn) => {
+        {[
+          { id: "recent", label: "Mais recentes" },
+          { id: "popular", label: "Mais populares" },
+          { id: "liked", label: "Mais curtidos" },
+        ].map((btn) => {
           const selected = btn.id === selectedFilter;
           return (
             <TouchableOpacity
@@ -350,22 +253,41 @@ async function toggleLike(articleId, currentLikesList) {
 
       <View style={{ height: 20 }} />
 
-      <Text style={styles.categoriesTitle}>Categorias</Text>
-      {renderCategoryGrid()}
+<Text style={styles.categoriesTitle}>Categorias</Text>
+
+      <View style={styles.categoriesGrid}>
+        {categories.map((cat) => {
+          const selected = cat.id === selectedCategory;
+
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.categoryItem,
+                selected && styles.categoryItemSelected,
+              ]}
+              onPress={() => setSelectedCategory(cat.id)}
+            >
+              <MaterialCommunityIcons
+                name={cat.icon}
+                size={28}
+                color={selected ? "#fff" : "#555"}
+              />
+              <Text
+                style={[
+                  styles.categoryLabel,
+                  selected && { color: "#fff" },
+                ]}
+              >
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       <Text style={styles.recommendedTitle}>Artigos recomendados</Text>
-        {articles.length > 0 ? (
-          finalArticlesList.length > 0 ? (
-            finalArticlesList.map((item) => <React.Fragment key={item.id}>{renderArticleCard({ item })}</React.Fragment>)
-          ) : (
-            <Text style={{ textAlign: "center", marginTop: 20, color: "#999" }}>
-              Nenhum artigo encontrado com estes filtros.
-            </Text>
-          )
-        ) : (
-          <Text style={{ textAlign: "center", color: "#666" }}>Carregando artigos...</Text>
-        )}
-
+       {getFilteredArticles().map((item) => renderArticleCard({ item }))}
 
       <View style={{ height: 60 }} />
     </ScrollView>
@@ -495,6 +417,12 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 120,
     backgroundColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+    articleImage: {
+    width: "100%",
+    height: 120,
     borderRadius: 8,
     marginBottom: 12,
   },

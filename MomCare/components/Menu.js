@@ -23,22 +23,22 @@ export default function Menu({ navigation }) {
         <Text style={styles.menuText}>Artigos</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Favoritos")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("FavoriteArticles")}>
         <Ionicons name="heart-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Favoritos</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Exames")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Exams")}>
         <Ionicons name="medkit-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Leitura de Exames</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Sobre")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("AboutUs")}>
         <MaterialCommunityIcons name="information-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Sobre o app</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Configuracoes")}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Settings")}>
         <Ionicons name="settings-outline" size={20} color="#555" />
         <Text style={styles.menuText}>Configurações</Text>
       </TouchableOpacity>

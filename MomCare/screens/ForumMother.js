@@ -4,14 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNavMother";
 import FotoArtigo from "../assets/fotoartigo.png";
 import {
-  doc,
-  collection,
-  getDocs,
-  query,
-  where,
-  getDoc
+  doc, getDocs, getDoc, collection, query, where, updateDoc,
+  arrayUnion, arrayRemove 
 } from "firebase/firestore";
 import { db } from "../firebaseConfig";
+import { useMother } from "../providers/MotherContext";
 
 async function getAutorData(userId) {
   if (!userId) return null;
@@ -51,6 +48,7 @@ function normalizeAvatar(avatar) {
 export default function ForumMother({ navigation }) {
   const [postsState, setPostsState] = useState([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const { motherData } = useMother();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -74,6 +72,7 @@ export default function ForumMother({ navigation }) {
             avatar: normalizeAvatar(autorInfo?.avatar ?? data.avatar),
             conteudo: data.conteudo,
             curtidas: totalCurtidas,
+            curtidasLista: data.curtidas ?? [],
             comentarios: totalComentarios,
             data: data.data,
             idAutor: data.id_autor ?? "Usuário",
@@ -93,6 +92,40 @@ export default function ForumMother({ navigation }) {
 
     fetchPosts();
   }, []);
+
+async function toggleCurtida(postId, curtidasAtuais) {
+  try {
+    const postRef = doc(db, "forum", postId);
+    const jaCurtiu = curtidasAtuais.includes(motherData.id);
+
+    if (jaCurtiu) {
+      await updateDoc(postRef, {
+        curtidas: arrayRemove(motherData.id)
+      });
+      setPostsState(prev =>
+        prev.map(post =>
+          post.id === postId
+            ? { ...post, curtidas: post.curtidas - 1, curtidasLista: curtidasAtuais.filter(id => id !== motherData.id) }
+            : post
+        )
+      );
+    } else {
+      await updateDoc(postRef, {
+        curtidas: arrayUnion(motherData.id)
+      });
+      setPostsState(prev =>
+        prev.map(post =>
+          post.id === postId
+            ? { ...post, curtidas: post.curtidas + 1, curtidasLista: [...curtidasAtuais, motherData.id] }
+            : post
+        )
+      );
+    }
+  } catch (error) {
+    console.error("Erro ao curtir:", error);
+  }
+}
+
 
   const renderItem = ({ item }) => {
     const fotoAvatar = typeof item.avatar === 'string' && item.avatar.startsWith('http') 
@@ -150,11 +183,22 @@ export default function ForumMother({ navigation }) {
               <Ionicons name="chatbubble-outline" size={16} color="#888" />
               <Text style={styles.actionText}>{item.comentarios}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="thumbs-up-outline" size={16} color="#888" />
-              <Text style={styles.actionText}>{item.curtidas}</Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => toggleCurtida(item.id, item.curtidasLista)}
+              >
+                <Ionicons
+                  name={
+                    item.curtidasLista.includes(motherData.id)
+                      ? "thumbs-up"
+                      : "thumbs-up-outline"
+                  }
+                  size={16}
+                  color={item.curtidasLista.includes(motherData.id) ? "#C31E65" : "#888"}
+                />
+                <Text style={styles.actionText}>{item.curtidas}</Text>
+              </TouchableOpacity>
+            </View>
         </View>
 
         <View style={styles.separator} />
