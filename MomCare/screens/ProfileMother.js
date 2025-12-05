@@ -443,7 +443,7 @@ const { motherData, updateMother } = useMother();
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Image source={require("../assets/fotoperfil.png")} style={styles.profileImage} />
+          <Image source={{uri: 'https://i.pinimg.com/736x/83/b0/7f/83b07fe79c4bdcc8e6c27f974c597842.jpg'}} style={styles.profileImage} />
 
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {isEditing ? (

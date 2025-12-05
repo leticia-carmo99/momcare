@@ -31,12 +31,15 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { app } from "../firebaseConfig";
+import { useMother } from "../providers/MotherContext";
 
 export default function HomeMother({ navigation, route }) {
-  const user = route?.params?.user || null;
+  const { motherData } = useMother();
   const [bebes, setBebes] = useState([]);
   const [sorrisosHoje, setSorrisosHoje] = useState(0);
   const [tempoSono, setTempoSono] = useState({ horas: 0, minutos: 0 });
+  const [tarefas, setTarefas] = useState([]);
+
 
   const [modalVisible, setModalVisible] = useState(false);
   const [tipoModal, setTipoModal] = useState(null); 
@@ -60,7 +63,6 @@ export default function HomeMother({ navigation, route }) {
     setAlertModalVisible(true);
   };
 
-  // Função para manipular a entrada numérica com limite de 2 dígitos e sem caracteres especiais
   const handleNumericInput = (text, setter) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     if (numericValue.length <= 2) {
@@ -68,11 +70,8 @@ export default function HomeMother({ navigation, route }) {
     }
   };
 
-  // Função para pegar a imagem
   const pickImage = async (bebeId) => {
     if (isUploading) return;
-
-    // Solicita permissão para a galeria
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       showAlertModal(
@@ -97,20 +96,14 @@ export default function HomeMother({ navigation, route }) {
     }
   };
 
-  // Função para salvar o Base64 Data URI no Firestore
   const uploadImage = async (base64Data, bebeId) => {
     setIsUploading(true);
     try {
-      // Cria o Data URI para ser usado pelo componente Image
       const dataUri = `data:image/jpeg;base64,${base64Data}`;
-
-      // Salva o Data URI (fotoURL) no Firestore
       const bebeDocRef = doc(db, "bebes", bebeId);
       await updateDoc(bebeDocRef, {
         fotoURL: dataUri,
       });
-
-      // Substituído Alert.alert por modal customizado
       showAlertModal(
         "Sucesso!",
         "Foto do bebê atualizada!",
@@ -118,7 +111,6 @@ export default function HomeMother({ navigation, route }) {
       );
     } catch (error) {
       console.error("Erro ao salvar a imagem no Firestore:", error);
-      // Substituído Alert.alert por modal customizado
       showAlertModal(
         "Erro",
         "Não foi possível salvar a foto, verifique se ela não é muito grande.",
@@ -220,6 +212,29 @@ export default function HomeMother({ navigation, route }) {
     return () => unsubscribe();
   }, [user]);
 
+  useEffect(() => {
+  if (!user?.id) return;
+
+  const q = query(
+    collection(db, "tarefas"),
+    where("userId", "==", user.id)
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const list = [];
+
+    snapshot.forEach((doc) => {
+      list.push({ id: doc.id, ...doc.data() });
+    });
+    list.sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
+
+    setTarefas(list);
+  });
+
+  return () => unsubscribe();
+}, [user]);
+
+
   function calcularIdade(dataNascimento) {
     const nascimento = dataNascimento.toDate
       ? dataNascimento.toDate()
@@ -266,7 +281,6 @@ export default function HomeMother({ navigation, route }) {
     if (tipo === "sorrisos") {
       setInputModal(sorrisosHoje.toString());
     } else if (tipo === "sono") {
-      // Ajuste: Remove a sugestão de zero inicial. toString já faz isso para números.
       setInputHoras(tempoSono.horas.toString());
       setInputMinutos(tempoSono.minutos.toString());
     }
@@ -291,18 +305,15 @@ export default function HomeMother({ navigation, route }) {
         }
       }
     } else if (tipoModal === "sono") {
-      // Usa "0" se o campo estiver vazio para garantir que parseInt não retorne NaN
       const horas = parseInt(inputHoras || "0");
       const minutos = parseInt(inputMinutos || "0");
-
-      // NOVO: Validação aprimorada para Horas (0-23) e Minutos (0-59)
       if (
         !isNaN(horas) &&
         horas >= 0 &&
-        horas <= 23 && // Limite de 23 horas
+        horas <= 23 && 
         !isNaN(minutos) &&
         minutos >= 0 &&
-        minutos <= 59 // Limite de 59 minutos
+        minutos <= 59
       ) {
         setTempoSono({ horas, minutos });
         if (user?.id) {
@@ -318,7 +329,6 @@ export default function HomeMother({ navigation, route }) {
           );
         }
       } else {
-        // Usa o novo modal de alerta para feedback de erro
         showAlertModal(
           "Erro",
           "Por favor, insira valores válidos para horas (0-23) e minutos (0-59).",
@@ -347,7 +357,7 @@ export default function HomeMother({ navigation, route }) {
           </LinearGradient>
           <View style={{ marginLeft: 12, flex: 1 }}>
             <Text style={styles.greeting}>
-              Boa tarde{user?.name ? `, ${user.name}!` : "!"}
+              Boa tarde{motherData?.name ? `, ${motherData.name}!` : "!"}
             </Text>
             <Text style={styles.question}>Como você está hoje?</Text>
           </View>
@@ -436,7 +446,6 @@ export default function HomeMother({ navigation, route }) {
           )}
         </ScrollView>
 
-        {/* Bolinhas de navegação (apenas se houver mais de um bebê) */}
         {bebes.length > 1 && (
           <View style={styles.dotsContainer}>
             {bebes.map((_, i) => (
@@ -451,7 +460,6 @@ export default function HomeMother({ navigation, route }) {
           </View>
         )}
 
-        {/* resto do código permanece idêntico */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <FontAwesome name="smile-o" size={28} color="#07A29C" />
@@ -576,13 +584,33 @@ export default function HomeMother({ navigation, route }) {
             <Text style={styles.activitiesTitle}>Próximas atividades</Text>
           </View>
 
-          <View style={styles.activityItem}>
-            <Ionicons name="walk-outline" size={22} color="#C31E65" />
-            <View style={styles.activityTextContainer}>
-              <Text style={styles.activityText}>Passeio</Text>
-              <Text style={styles.activitySubText}>Hoje das 13h às 15h</Text>
-            </View>
-          </View>
+            {tarefas.length > 0 ? (
+                tarefas.map((tarefa) => (
+                  <View key={tarefa.id} style={styles.activityItem}>
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={22}
+                      color={tarefa.done ? "#4CAF50" : "#C31E65"}
+                    />
+
+                    <View style={styles.activityTextContainer}>
+                      <Text style={styles.activityText}>{tarefa.title}</Text>
+
+                      <Text style={styles.activitySubText}>
+                        {tarefa.description}
+                      </Text>
+
+                      <Text style={styles.activitySubText}>
+                        Dia {tarefa.date} — {tarefa.time}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <Text style={[styles.activitySubText, { marginTop: 10 }]}>
+                  Nenhuma atividade para os próximos dias.
+                </Text>
+              )}
 
           <View style={styles.activityItem}>
             <MaterialCommunityIcons
@@ -617,7 +645,6 @@ export default function HomeMother({ navigation, route }) {
                 placeholderTextColor="#aaa"
               />
             ) : (
-              // NOVO: Aplicação de limites de 2 dígitos e handlers aprimorados
               <View>
                 <TextInput
                   style={styles.modalInput}
@@ -657,7 +684,6 @@ export default function HomeMother({ navigation, route }) {
         </View>
       </Modal>
 
-      {/* NOVO MODAL DE ALERTA CUSTOMIZADO */}
       <Modal transparent={true} animationType="fade" visible={alertModalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>

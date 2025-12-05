@@ -291,7 +291,7 @@ useEffect(() => {
         <View style={styles.profileCard}>
           <View style={styles.profileHeader}>
             <Image
-              source={require("../assets/fotoperfil.png")}
+              source={{uri: 'https://i.pinimg.com/736x/83/b0/7f/83b07fe79c4bdcc8e6c27f974c597842.jpg'}}
               style={styles.profileImage}
             />
           
